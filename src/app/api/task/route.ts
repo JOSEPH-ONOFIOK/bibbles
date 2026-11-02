@@ -1,6 +1,6 @@
 import { authed, bad } from "@/lib/api";
 import { PINNED_ID, TASK_ORDER, WALLET, toPublic, type TaskId } from "@/lib/entry";
-import { DbNotConfigured, store } from "@/lib/store";
+import { store } from "@/lib/store";
 import { verifyBibblePost, verifyTagReply } from "@/lib/xpost";
 
 // POST { task, ... } completes one task for the signed-in account.
@@ -13,7 +13,6 @@ export async function POST(req: Request) {
   try {
     return await complete(req);
   } catch (e) {
-    if (e instanceof DbNotConfigured) return bad("Sign ups aren't open yet.", 503);
     console.error("task failed", e);
     return bad("Something went wrong. Please try again.", 500);
   }

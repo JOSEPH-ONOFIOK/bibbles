@@ -1,10 +1,10 @@
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { cookies } from "next/headers";
+import { cookieBase, sign, unsign } from "./auth";
 import type { Entry } from "./entry";
 
-// Storage, first one configured wins:
-//   Upstash Redis   UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN (production)
-//   JSON file       .data/entries.json (local development only)
+// Storage:
+//   Upstash Redis   when UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN are set (optional, add later)
+//   Browser cookie  otherwise: each visitor's progress is kept in a signed cookie
 
 interface Store {
   get(handle: string): Promise<Entry | null>;
@@ -62,54 +62,29 @@ const upstash: Store = {
   },
 };
 
-// ---------- Local file ----------
-// Reads the file fresh on every call: each route is its own bundle, so an
-// in-memory copy would go stale between routes.
-const DIR = join(process.cwd(), ".data");
-const FILE = join(DIR, "entries.json");
+// ---------- Browser cookie ----------
+// No database: each visitor's entry lives in a signed cookie in their own
+// browser. Signing means it can't be edited to fake tasks. There is no shared
+// list, so the export is empty and wallets can't be checked across accounts.
+const ENTRY_COOKIE = "bibble_entry";
 const windows = new Map<string, { n: number; reset: number }>();
-let queue: Promise<unknown> = Promise.resolve();
 
-async function db(): Promise<Record<string, Entry>> {
-  try {
-    return JSON.parse(await readFile(FILE, "utf8"));
-  } catch {
-    return {};
-  }
-}
-
-function mutate(fn: (d: Record<string, Entry>) => void) {
-  const run = queue.then(async () => {
-    const d = await db();
-    fn(d);
-    await mkdir(DIR, { recursive: true });
-    const tmp = `${FILE}.${process.pid}.${Date.now()}.tmp`;
-    await writeFile(tmp, JSON.stringify(d, null, 1));
-    await rename(tmp, FILE);
-  });
-  queue = run.catch(() => {});
-  return run;
-}
-
-const file: Store = {
+const cookie: Store = {
   async get(handle) {
-    return (await db())[key(handle)] ?? null;
+    const e = unsign<Entry>((await cookies()).get(ENTRY_COOKIE)?.value);
+    return e && key(e.handle) === key(handle) ? e : null;
   },
   async put(entry) {
-    await mutate((d) => {
-      d[key(entry.handle)] = entry;
-    });
+    (await cookies()).set({ name: ENTRY_COOKIE, value: sign(entry), ...cookieBase, maxAge: 180 * 86400 });
   },
   async all() {
-    return Object.values(await db());
+    return [];
   },
-  async walletOwner(wallet) {
-    const w = wallet.toLowerCase();
-    return Object.values(await db()).find((e) => e.wallet?.toLowerCase() === w)?.handle.toLowerCase() ?? null;
+  async walletOwner() {
+    return null;
   },
-  async claimWallet() {
-    // the file store finds wallets by scanning entries
-  },
+  async claimWallet() {},
+  // Per server instance only, which is the best a cookie setup can do
   async limit(k, max, windowSec) {
     const now = Date.now();
     const w = windows.get(k);
@@ -121,15 +96,5 @@ const file: Store = {
   },
 };
 
-// The file store can't work on serverless hosts (read-only disk, many instances), so fail loudly there.
-const serverless = !!(process.env.VERCEL || process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME);
-export class DbNotConfigured extends Error {}
-export const dbConfigured = !!(URL_ && TOKEN) || !serverless;
-
-const unconfigured = new Proxy({} as Store, {
-  get() {
-    return () => Promise.reject(new DbNotConfigured("Database not configured: set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN"));
-  },
-});
-
-export const store: Store = URL_ && TOKEN ? upstash : serverless ? unconfigured : file;
+export const hasDatabase = !!(URL_ && TOKEN);
+export const store: Store = hasDatabase ? upstash : cookie;

@@ -1,10 +1,13 @@
 import { isComplete } from "@/lib/entry";
-import { store } from "@/lib/store";
+import { hasDatabase, store } from "@/lib/store";
 
 // GET /api/admin/export?key=ADMIN_KEY → CSV of every sign up
 export async function GET(req: Request) {
   const key = new URL(req.url).searchParams.get("key");
   if (!process.env.ADMIN_KEY || key !== process.env.ADMIN_KEY) return new Response("Not found", { status: 404 });
+  if (!hasDatabase) {
+    return new Response("No database connected: progress is kept in each visitor's browser, so there is no list to export.", { status: 503 });
+  }
 
   const cell = (v: unknown) => {
     const s = v == null ? "" : String(v);

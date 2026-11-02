@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { OAUTH_COOKIE, authMode, authorizeUrl, clientIp, cookieBase, newOAuth, sign, siteOrigin } from "@/lib/auth";
-import { dbConfigured, store } from "@/lib/store";
+import { store } from "@/lib/store";
 
 // GET /api/auth/x/start → redirects to X's consent screen
 export async function GET(req: Request) {
   const origin = siteOrigin(req);
   const fail = (code: string) => NextResponse.redirect(`${origin}/?auth_error=${code}#join`);
   if (authMode !== "x") return fail("unavailable");
-  if (!dbConfigured) return fail("no_db");
   if (!(await store.limit(`start:${clientIp(req)}`, 20, 600))) return fail("rate_limited");
 
   const o = newOAuth();

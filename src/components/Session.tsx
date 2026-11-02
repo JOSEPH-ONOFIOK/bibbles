@@ -31,7 +31,6 @@ const AUTH_ERRORS: Record<string, string> = {
   handle_taken: "That handle is linked to a different X account.",
   rate_limited: "Too many tries. Wait a few minutes and try again.",
   unavailable: "Connect X isn't switched on yet.",
-  no_db: "Sign ups aren't open yet: the database isn't connected.",
   x_failed: "X didn't respond properly. Please try again.",
 };
 

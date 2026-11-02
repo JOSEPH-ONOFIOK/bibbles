@@ -1,26 +1,229 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ink: #161616;
+  --pink: #cf4f9c;
+  --page-bg: #cf4f9c;
+  --paper: #fffaf3;
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ink: var(--ink);
+  --color-pink: var(--pink);
+  --color-paper: var(--paper);
+  --font-display: var(--font-chewy);
+  --font-sans: var(--font-nunito);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--page-bg);
+  transition: background-color 700ms ease;
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--ink);
+  font-family: var(--font-nunito), system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--ink);
+  color: #fff;
+}
+
+/* Chunky outlined surfaces, like the art's thick black lines */
+.chunk {
+  border: 4px solid var(--ink);
+  border-radius: 28px;
+  box-shadow: 6px 6px 0 var(--ink);
+  background: var(--paper);
+}
+
+/* Squishy buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-chewy);
+  font-size: 1.25rem;
+  letter-spacing: 0.02em;
+  padding: 0.7rem 1.5rem;
+  border: 4px solid var(--ink);
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 4px 5px 0 var(--ink);
+  transition:
+    transform 160ms var(--spring),
+    box-shadow 160ms var(--spring),
+    background-color 160ms ease;
+  cursor: pointer;
+  user-select: none;
+}
+.btn:hover {
+  transform: translateY(-2px) rotate(-1deg);
+  box-shadow: 5px 7px 0 var(--ink);
+}
+.btn:active {
+  transform: translateY(4px) scale(0.94, 0.88);
+  box-shadow: 1px 1px 0 var(--ink);
+  transition-duration: 60ms;
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.btn-pink {
+  background: var(--pink);
+  color: #fff;
+}
+
+.wordmark {
+  font-family: var(--font-chewy);
+  color: #fff;
+  -webkit-text-stroke: 0;
+  text-shadow: 4px 5px 0 var(--ink);
+}
+
+/* Hero wordmark wobble */
+@keyframes wobble {
+  0%, 100% { transform: rotate(-2deg) scale(1); }
+  50% { transform: rotate(2deg) scale(1.03); }
+}
+.wobble {
+  animation: wobble 3.2s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(12deg); }
+}
+.float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Particle bursts */
+.burst-particle {
+  position: fixed;
+  z-index: 60;
+  pointer-events: none;
+  translate: -50% -50%;
+  animation: burst 800ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+@keyframes burst {
+  0% { transform: translate(0, 0) scale(0.2) rotate(0deg); opacity: 1; }
+  60% { opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(1) rotate(var(--rot)); opacity: 0; }
+}
+
+/* Cursor sparkle trail */
+.trail-sparkle {
+  position: fixed;
+  z-index: 60;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  translate: -50% -50%;
+  background: #fff;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+  filter: drop-shadow(0 0 1px var(--ink));
+  animation: trail 700ms ease-out forwards;
+}
+@keyframes trail {
+  from { transform: scale(1) rotate(var(--rot)); opacity: 1; }
+  to { transform: scale(0) translateY(18px) rotate(calc(var(--rot) + 90deg)); opacity: 0; }
+}
+
+/* Peeking Bibbles */
+.peek {
+  transition: transform 520ms var(--spring);
+  will-change: transform;
+}
+.peek-hidden { transform: translateY(105%); }
+.peek-up { transform: translateY(var(--peek-rest, 18%)); }
+.peek-duck { transform: translateY(62%) scaleY(0.92); transition-duration: 260ms; }
+.peek-boing { animation: boing 520ms var(--spring); }
+@keyframes boing {
+  0% { transform: translateY(var(--peek-rest, 18%)) scale(1, 1); }
+  30% { transform: translateY(calc(var(--peek-rest, 18%) + 6%)) scale(1.12, 0.86); }
+  60% { transform: translateY(calc(var(--peek-rest, 18%) - 10%)) scale(0.94, 1.08); }
+  100% { transform: translateY(var(--peek-rest, 18%)) scale(1, 1); }
+}
+
+/* Reacting Bibble swap */
+@keyframes pop-in {
+  0% { transform: scale(0.88, 1.1); }
+  55% { transform: scale(1.06, 0.94); }
+  100% { transform: scale(1); }
+}
+.pop-in { animation: pop-in 420ms var(--spring); transform-origin: 50% 100%; }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-10px) rotate(-2deg); }
+  40% { transform: translateX(9px) rotate(2deg); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(4px); }
+}
+.shake { animation: shake 420ms ease; }
+
+/* Spiral-eye spinner */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 900ms linear infinite; }
+
+/* Stickers */
+.sticker-img {
+  filter:
+    drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff)
+    drop-shadow(5px 6px 0 rgba(22, 22, 22, 0.25));
+}
+.flip-card {
+  perspective: 1200px;
+}
+.flip-inner {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 650ms var(--spring);
+}
+.flip-card.flipped .flip-inner {
+  transform: rotateY(180deg);
+}
+.flip-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.flip-back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+}
+
+/* Nav mascot blink */
+@keyframes blink {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.1); }
+}
+.blink-eyes { transform-box: fill-box; transform-origin: center; }
+.blinking .blink-eyes { animation: blink 220ms ease-in-out; }
+
+/* Wavy section edge */
+.wave-top {
+  -webkit-mask: radial-gradient(28px 22px at 28px 0, #0000 98%, #000) 0 0 / 56px 100% repeat-x;
+  mask: radial-gradient(28px 22px at 28px 0, #0000 98%, #000) 0 0 / 56px 100% repeat-x;
+}
+
+.dots {
+  background-image: radial-gradient(rgba(22, 22, 22, 0.12) 2px, transparent 2.5px);
+  background-size: 22px 22px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+  html { scroll-behavior: auto; }
 }

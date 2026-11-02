@@ -124,6 +124,7 @@ const file: Store = {
 // The file store can't work on serverless hosts (read-only disk, many instances), so fail loudly there.
 const serverless = !!(process.env.VERCEL || process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME);
 export class DbNotConfigured extends Error {}
+export const dbConfigured = !!(URL_ && TOKEN) || !serverless;
 
 const unconfigured = new Proxy({} as Store, {
   get() {

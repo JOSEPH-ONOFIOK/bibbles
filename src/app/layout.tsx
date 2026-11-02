@@ -1,29 +1,40 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Chewy, Nunito } from "next/font/google";
 import "./globals.css";
+import { SITE_URL } from "@/lib/site";
 
 const chewy = Chewy({ variable: "--font-chewy", weight: "400", subsets: ["latin"] });
 const nunito = Nunito({ variable: "--font-nunito", subsets: ["latin"] });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const TITLE = "Bibbles";
+const DESCRIPTION = "4,444 soft, silly little Bibbles. Build your own Bibble, connect X and join the Bibbles.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: "Bibbles",
-  description: "4,444 soft, silly little Bibbles. Build your own and join the Bibbles.",
-  icons: { icon: "/brand/logo.jpg" },
+  title: { default: TITLE, template: "%s · Bibbles" },
+  description: DESCRIPTION,
+  applicationName: TITLE,
+  keywords: ["Bibbles", "NFT", "PFP", "4444", "cute", "collection", "allowlist"],
+  alternates: { canonical: "/" },
   openGraph: {
-    title: "Bibbles",
-    description: "4,444 soft, silly little Bibbles.",
-    images: ["/brand/banner.jpg"],
+    type: "website",
+    url: "/",
+    siteName: TITLE,
+    title: TITLE,
+    description: DESCRIPTION,
+    locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
     site: "@bibbleshq",
-    title: "Bibbles",
-    description: "4,444 soft, silly little Bibbles.",
-    images: ["/brand/banner.jpg"],
+    creator: "@bibbleshq",
+    title: TITLE,
+    description: DESCRIPTION,
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#cf4f9c",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

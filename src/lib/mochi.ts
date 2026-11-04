@@ -1,5 +1,5 @@
-// The five revealed Bibbles. Names are placeholders until the team names them.
-export type FeaturedBibble = {
+// The five revealed Mochis. Names are placeholders until the team names them.
+export type FeaturedMochi = {
   id: number;
   name: string;
   img: string;
@@ -9,11 +9,11 @@ export type FeaturedBibble = {
 
 export const BRAND_PINK = "#cf4f9c";
 
-export const FEATURED: FeaturedBibble[] = [
+export const FEATURED: FeaturedMochi[] = [
   {
     id: 1,
     name: "Sir Sunny",
-    img: "/bibbles/bibble-1.png",
+    img: "/mochi/mochi-1.png",
     bg: "#ffe5b4",
     traits: [
       { label: "Skin", value: "Mint" },
@@ -26,7 +26,7 @@ export const FEATURED: FeaturedBibble[] = [
   {
     id: 2,
     name: "Halo Hana",
-    img: "/bibbles/bibble-2.png",
+    img: "/mochi/mochi-2.png",
     bg: "#ccffb2",
     traits: [
       { label: "Skin", value: "Blush" },
@@ -39,7 +39,7 @@ export const FEATURED: FeaturedBibble[] = [
   {
     id: 3,
     name: "DJ Squish",
-    img: "/bibbles/bibble-3.png",
+    img: "/mochi/mochi-3.png",
     bg: "#ffbe60",
     traits: [
       { label: "Skin", value: "Lilac" },
@@ -52,7 +52,7 @@ export const FEATURED: FeaturedBibble[] = [
   {
     id: 4,
     name: "Cap'n Shell",
-    img: "/bibbles/bibble-4.png",
+    img: "/mochi/mochi-4.png",
     bg: "#fa60ff",
     traits: [
       { label: "Skin", value: "Latte" },
@@ -65,7 +65,7 @@ export const FEATURED: FeaturedBibble[] = [
   {
     id: 5,
     name: "Nap Fang",
-    img: "/bibbles/bibble-5.png",
+    img: "/mochi/mochi-5.png",
     bg: "#ff606c",
     traits: [
       { label: "Skin", value: "Cream" },
@@ -80,5 +80,5 @@ export const FEATURED: FeaturedBibble[] = [
 export const SUPPLY = 4444;
 export const SUPPLY_LABEL = SUPPLY.toLocaleString("en-US");
 
-export const X_URL = "https://x.com/bibbleshq";
-export const X_HANDLE = "@bibbleshq";
+export const X_URL = "https://x.com/mochimochirh";
+export const X_HANDLE = "@mochimochirh";

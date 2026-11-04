@@ -1,13 +1,13 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { BibbleArt, type BibbleLook } from "./BibbleArt";
+import { MochiArt, type MochiLook } from "./MochiArt";
 import { burstFrom } from "@/lib/burst";
-import { X_HANDLE, X_URL } from "@/lib/bibbles";
+import { X_HANDLE, X_URL } from "@/lib/mochi";
 
 type Mood = "idle" | "typing" | "checking" | "in" | "out" | "invalid";
 
-const LOOKS: Record<Mood, BibbleLook> = {
+const LOOKS: Record<Mood, MochiLook> = {
   idle: { skin: "mint", face: "sparkle", head: "none", fit: "hoodie", aura: "sparkles", bg: "none" },
   typing: { skin: "mint", face: "deadpan", head: "none", fit: "hoodie", aura: "none", bg: "none" },
   checking: { skin: "mint", face: "dizzy", head: "none", fit: "hoodie", aura: "none", bg: "none" },
@@ -20,7 +20,7 @@ const LINES: Record<Mood, string> = {
   idle: "Paste your wallet. I'll check the list!",
   typing: "Hmm. Go on…",
   checking: "Checking the list…",
-  in: "YOU'RE IN! Welcome to the Bibbles.",
+  in: "YOU'RE IN! Welcome to the Mochis.",
   out: "Not on the list yet. Stick around, more spots are coming.",
   invalid: "Huh? That doesn't look like a wallet address.",
 };
@@ -81,7 +81,7 @@ export function Checker() {
     }
   };
 
-  const shareText = encodeURIComponent(`I'm on the Bibbles list 🩷 ${X_HANDLE}`);
+  const shareText = encodeURIComponent(`I'm on the Mochis list 🩷 ${X_HANDLE}`);
 
   return (
     <div className="mx-auto grid max-w-5xl items-center gap-10 px-4 md:grid-cols-[1fr_1.1fr]">
@@ -94,7 +94,7 @@ export function Checker() {
         </div>
         <div ref={art} className="relative aspect-[740/700]">
           <div key={bump} className="pop-in absolute inset-0">
-            <BibbleArt look={LOOKS[mood]} className="h-full w-full" title={`Bibble looking ${mood}`} svgId="checker-bibble" viewBox="130 300 740 700" />
+            <MochiArt look={LOOKS[mood]} className="h-full w-full" title={`Mochi looking ${mood}`} svgId="checker-mochi" viewBox="130 300 740 700" />
           </div>
         </div>
       </div>
@@ -103,7 +103,7 @@ export function Checker() {
         <h2 className="font-display text-5xl text-pink" style={{ textShadow: "3px 3px 0 #161616" }}>
           Am I in?
         </h2>
-        <p className="mt-2 font-semibold text-ink/75">Drop the wallet you signed up with. The Bibble will tell you how it went.</p>
+        <p className="mt-2 font-semibold text-ink/75">Drop the wallet you signed up with. The Mochi will tell you how it went.</p>
         <form onSubmit={check} className="mt-6 flex flex-col gap-3">
           <label htmlFor="wallet" className="sr-only">
             Wallet address
@@ -138,7 +138,7 @@ export function Checker() {
         {mood === "in" && (
           <div className="pop-in mt-6 rounded-2xl border-4 border-ink bg-[#ccffb2] p-4">
             <p className="font-display text-2xl">You&apos;re on the list.</p>
-            <p className="text-sm font-semibold">Tell the timeline. Bibbles love attention.</p>
+            <p className="text-sm font-semibold">Tell the timeline. Mochis love attention.</p>
             <a
               href={`https://x.com/intent/post?text=${shareText}&url=${encodeURIComponent(X_URL)}`}
               target="_blank"

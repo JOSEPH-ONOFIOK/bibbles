@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { burstFrom, type BurstKind } from "@/lib/burst";
 
-// A Bibble that rises from the bottom edge of its container, ducks when the
+// A Mochi that rises from the bottom edge of its container, ducks when the
 // cursor gets close, and boings with a little burst when clicked.
-export function PeekBibble({
+export function PeekMochi({
   src,
   alt,
   delay = 0,

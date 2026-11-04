@@ -1,7 +1,7 @@
 // Reads a public X post through X's public embed data (the source X's own embeds use).
 // No API key needed, but it only sees public posts.
 
-import { X_HANDLE } from "./bibbles";
+import { X_HANDLE } from "./mochi";
 
 const US = X_HANDLE.replace("@", "").toLowerCase();
 const POST_LINK = /(?:https?:\/\/)?(?:www\.|mobile\.)?(?:x|twitter)\.com\/(\w{1,15})\/status(?:es)?\/(\d+)/i;
@@ -60,13 +60,13 @@ export async function verifyTagReply(link: string, handle: string, pinnedId: str
   return { ok: true, link: `https://x.com/${r.post.author}/status/${r.id}` };
 }
 
-// A post with their Bibble image that tags us and includes their wallet
-export async function verifyBibblePost(link: string, handle: string, wallet: string): Promise<Result> {
+// A post with their Mochi image that tags us and includes their wallet
+export async function verifyMochiPost(link: string, handle: string, wallet: string): Promise<Result> {
   const r = await load(link, handle);
   if ("ok" in r) return r;
   const text = r.post.text.toLowerCase();
   if (!new RegExp(`@${US}\\b`).test(text)) return { ok: false, error: `Your post needs to tag ${X_HANDLE}.` };
   if (!text.includes(wallet.toLowerCase())) return { ok: false, error: "Your post needs to include the wallet you entered in step 4." };
-  if (!r.post.hasImage) return { ok: false, error: "Attach your Bibble image to the post." };
+  if (!r.post.hasImage) return { ok: false, error: "Attach your Mochi image to the post." };
   return { ok: true, link: `https://x.com/${r.post.author}/status/${r.id}` };
 }

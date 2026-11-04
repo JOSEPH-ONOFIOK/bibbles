@@ -46,7 +46,7 @@ export function Nav() {
         <a href="#top" onMouseEnter={blink} className="flex items-center gap-2">
           <Mascot blinkRef={mascot} />
           <span className="font-display text-2xl text-pink" style={{ textShadow: "2px 2px 0 #161616" }}>
-            Bibbles
+            Mochi
           </span>
         </a>
         <div className="ml-auto hidden items-center gap-1 sm:flex">

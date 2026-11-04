@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "./Session";
-import { FEATURED, X_HANDLE, X_URL } from "@/lib/bibbles";
+import { FEATURED, X_HANDLE, X_URL } from "@/lib/mochi";
 import { burstFrom } from "@/lib/burst";
 import { PINNED_ID, PINNED_POST, TASK_ORDER, WALLET, isComplete, type TaskId } from "@/lib/entry";
-import { downloadMyBibble, useMyBibble } from "@/lib/myBibble";
+import { downloadMyMochi, useMyMochi } from "@/lib/myMochi";
 
 const US = X_HANDLE.replace("@", "");
 
@@ -140,7 +140,7 @@ function DevConnect() {
   );
 }
 
-// Five Bibbles that wake up as tasks get done
+// Five Mochis that wake up as tasks get done
 function Progress({ count }: { count: number }) {
   return (
     <div className="flex items-end justify-center gap-1 sm:gap-2" aria-label={`${count} of 5 tasks done`}>
@@ -161,7 +161,7 @@ function Progress({ count }: { count: number }) {
 
 export function Join() {
   const { ready, auth, entry, notice, connect, disconnect, task } = useSession();
-  const { name, touched } = useMyBibble();
+  const { name, touched } = useMyMochi();
   // null until they type, so the saved wallet shows by default
   const [walletDraft, setWallet] = useState<string | null>(null);
   const [walletError, setWalletError] = useState<string | null>(null);
@@ -190,13 +190,13 @@ export function Join() {
     setWalletError(r.error ?? null);
   };
 
-  const postText = `Meet ${name}, my Bibble 🩷\n\n${X_HANDLE}\n\n${entry?.wallet ?? ""}`;
+  const postText = `Meet ${name}, my Mochi 🩷\n\n${X_HANDLE}\n\n${entry?.wallet ?? ""}`;
 
   return (
     <div className="mx-auto max-w-3xl px-4">
       <div className="text-center">
         <h2 className="font-display text-6xl text-white" style={{ textShadow: "4px 4px 0 #161616" }}>
-          Join the Bibbles
+          Join the Mochis
         </h2>
         <p className="mt-2 font-bold text-ink/80">Connect your X, do five quick tasks, and you&apos;re in the running.</p>
       </div>
@@ -286,7 +286,7 @@ export function Join() {
                     <>
                       <p className="text-sm font-semibold text-ink/70">Reply under the pinned post and tag at least one friend, then paste your reply&apos;s link.</p>
                       <button
-                        onClick={() => openX(intent("post", { in_reply_to: PINNED_ID, text: "Getting my Bibble 🩷 come with me " }))}
+                        onClick={() => openX(intent("post", { in_reply_to: PINNED_ID, text: "Getting my Mochi 🩷 come with me " }))}
                         className="btn mt-3 px-4! py-2! text-base!"
                       >
                         <XLogo /> Reply on X
@@ -308,10 +308,10 @@ export function Join() {
                       placeholder="0x…"
                       spellCheck={false}
                       autoComplete="off"
-                      disabled={done("bibble")}
+                      disabled={done("mochi")}
                       className="min-w-0 flex-1 rounded-2xl border-4 border-ink bg-white px-3 py-2 font-mono text-sm outline-none focus:shadow-[3px_3px_0_#cf4f9c] disabled:opacity-60"
                     />
-                    {!done("bibble") && (
+                    {!done("mochi") && (
                       <button
                         type="submit"
                         disabled={savingWallet || wallet.trim() === entry.wallet}
@@ -325,9 +325,9 @@ export function Join() {
                 </form>
               </Step>
 
-              <Step n={5} title="Post your Bibble" done={done("bibble")}>
-                {done("bibble") ? (
-                  <a href={entry.bibbleLink} target="_blank" rel="noreferrer" className="text-sm font-bold underline">
+              <Step n={5} title="Post your Mochi" done={done("mochi")}>
+                {done("mochi") ? (
+                  <a href={entry.mochiLink} target="_blank" rel="noreferrer" className="text-sm font-bold underline">
                     See your post
                   </a>
                 ) : !entry.wallet ? (
@@ -337,9 +337,9 @@ export function Join() {
                     <ol className="list-decimal space-y-1 pl-5 text-sm font-semibold text-ink/75">
                       <li>
                         {touched ? (
-                          <>Your Bibble: <b>{name}</b>.</>
+                          <>Your Mochi: <b>{name}</b>.</>
                         ) : (
-                          <>Make your Bibble in the builder below.</>
+                          <>Make your Mochi in the builder below.</>
                         )}{" "}
                         Download it as a PNG.
                       </li>
@@ -348,10 +348,10 @@ export function Join() {
                     </ol>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <a href="#builder" className="btn px-4! py-2! text-base!">
-                        {touched ? "Edit Bibble" : "Make my Bibble"}
+                        {touched ? "Edit Mochi" : "Make my Mochi"}
                       </a>
                       <button
-                        onClick={async () => setDownloaded(await downloadMyBibble(name))}
+                        onClick={async () => setDownloaded(await downloadMyMochi(name))}
                         className={`btn px-4! py-2! text-base! ${downloaded ? "bg-[#ccffb2]!" : ""}`}
                       >
                         {downloaded ? "Downloaded" : "Download PNG"}
@@ -360,7 +360,7 @@ export function Join() {
                         <XLogo /> Post on X
                       </button>
                     </div>
-                    <LinkProof task="bibble" placeholder="https://x.com/you/status/…" />
+                    <LinkProof task="mochi" placeholder="https://x.com/you/status/…" />
                   </>
                 )}
               </Step>

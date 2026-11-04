@@ -1,14 +1,14 @@
 import { authed, bad } from "@/lib/api";
 import { PINNED_ID, TASK_ORDER, WALLET, toPublic, type TaskId } from "@/lib/entry";
 import { store } from "@/lib/store";
-import { verifyBibblePost, verifyTagReply } from "@/lib/xpost";
+import { verifyMochiPost, verifyTagReply } from "@/lib/xpost";
 
 // POST { task, ... } completes one task for the signed-in account.
 //   follow                       clicked the follow button
 //   engage  { action: like|repost }  clicked like or repost; done when both are
 //   tag     { link }             reply under the pinned post tagging a friend (verified)
 //   wallet  { wallet }           EVM address, one per account
-//   bibble  { link }             post with their Bibble, tagging us, with their wallet (verified)
+//   mochi  { link }             post with their Mochi, tagging us, with their wallet (verified)
 export async function POST(req: Request) {
   try {
     return await complete(req);
@@ -52,8 +52,8 @@ async function complete(req: Request) {
     case "wallet": {
       const wallet = String(body.wallet ?? "").trim();
       if (!WALLET.test(wallet)) return bad("That isn't a valid EVM address. It starts with 0x followed by 40 characters.");
-      if (entry.done.bibble && wallet.toLowerCase() !== entry.wallet?.toLowerCase()) {
-        return bad("Your Bibble post already uses your current wallet, so it can't be changed now.");
+      if (entry.done.mochi && wallet.toLowerCase() !== entry.wallet?.toLowerCase()) {
+        return bad("Your Mochi post already uses your current wallet, so it can't be changed now.");
       }
       const owner = await store.walletOwner(wallet);
       if (owner && owner !== entry.handle.toLowerCase()) return bad("That wallet is already used by another account.");
@@ -63,12 +63,12 @@ async function complete(req: Request) {
       break;
     }
 
-    case "bibble": {
+    case "mochi": {
       if (!entry.wallet) return bad("Add your wallet in step 4 first.");
-      const r = await verifyBibblePost(String(body.link ?? ""), entry.handle, entry.wallet);
+      const r = await verifyMochiPost(String(body.link ?? ""), entry.handle, entry.wallet);
       if (!r.ok) return bad(r.error);
-      entry.bibbleLink = r.link;
-      entry.done.bibble ??= now;
+      entry.mochiLink = r.link;
+      entry.done.mochi ??= now;
       break;
     }
   }

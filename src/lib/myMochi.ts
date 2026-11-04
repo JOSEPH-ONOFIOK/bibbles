@@ -2,16 +2,16 @@
 
 import { useSyncExternalStore } from "react";
 
-// The Bibble the visitor is building, shared between the builder and the tasks.
+// The Mochi the visitor is building, shared between the builder and the tasks.
 let state = { name: "Lil Mochi", touched: false };
 const listeners = new Set<() => void>();
 
-export function setMyBibbleName(name: string, touched = true) {
+export function setMyMochiName(name: string, touched = true) {
   state = { name, touched: state.touched || touched };
   listeners.forEach((l) => l());
 }
 
-export function useMyBibble() {
+export function useMyMochi() {
   return useSyncExternalStore(
     (l) => {
       listeners.add(l);
@@ -23,8 +23,8 @@ export function useMyBibble() {
 }
 
 // Renders the builder's SVG to a 1000×1000 PNG and downloads it
-export async function downloadMyBibble(name: string) {
-  const svg = document.getElementById("builder-bibble");
+export async function downloadMyMochi(name: string) {
+  const svg = document.getElementById("builder-mochi");
   if (!svg) return false;
   const data = new XMLSerializer().serializeToString(svg);
   const url = URL.createObjectURL(new Blob([data], { type: "image/svg+xml" }));
@@ -39,7 +39,7 @@ export async function downloadMyBibble(name: string) {
   if (!blob) return false;
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `${name.trim().replace(/[^a-z0-9]+/gi, "-").toLowerCase() || "my-bibble"}.png`;
+  a.download = `${name.trim().replace(/[^a-z0-9]+/gi, "-").toLowerCase() || "my-mochi"}.png`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   return true;

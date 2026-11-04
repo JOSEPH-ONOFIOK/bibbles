@@ -12,8 +12,8 @@ export type AuthMode = "x" | "dev" | "off";
 export const authMode: AuthMode =
   X_CLIENT_ID && SECRET ? "x" : process.env.NODE_ENV !== "production" ? "dev" : "off";
 
-export const SESSION_COOKIE = "bibble_session";
-export const OAUTH_COOKIE = "bibble_oauth";
+export const SESSION_COOKIE = "mochi_session";
+export const OAUTH_COOKIE = "mochi_oauth";
 const secure = process.env.NODE_ENV === "production";
 export const cookieBase = { httpOnly: true, secure, sameSite: "lax" as const, path: "/" };
 

@@ -6,15 +6,15 @@ import { SITE_URL } from "@/lib/site";
 const chewy = Chewy({ variable: "--font-chewy", weight: "400", subsets: ["latin"] });
 const nunito = Nunito({ variable: "--font-nunito", subsets: ["latin"] });
 
-const TITLE = "Bibbles";
-const DESCRIPTION = "4,444 soft, silly little Bibbles. Build your own Bibble, connect X and join the Bibbles.";
+const TITLE = "Mochi";
+const DESCRIPTION = "4,444 soft, silly little Mochis. Build your own Mochi, connect X and join the Mochis.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: { default: TITLE, template: "%s · Bibbles" },
+  title: { default: TITLE, template: "%s · Mochi" },
   description: DESCRIPTION,
   applicationName: TITLE,
-  keywords: ["Bibbles", "NFT", "PFP", "4444", "cute", "collection", "allowlist"],
+  keywords: ["Mochi", "Mochis", "NFT", "PFP", "4444", "cute", "collection", "allowlist"],
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
@@ -26,8 +26,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    site: "@bibbleshq",
-    creator: "@bibbleshq",
+    site: "@mochimochirh",
+    creator: "@mochimochirh",
     title: TITLE,
     description: DESCRIPTION,
   },

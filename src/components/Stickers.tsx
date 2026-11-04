@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FEATURED, SUPPLY_LABEL } from "@/lib/bibbles";
+import { FEATURED, SUPPLY_LABEL } from "@/lib/mochi";
 import { burstFrom } from "@/lib/burst";
 
 const TILTS = [-6, 4, -3, 7, -5];

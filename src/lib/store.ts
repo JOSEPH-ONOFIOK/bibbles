@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { cookieBase, sign, unsign } from "./auth";
 import type { Entry } from "./entry";
+import { queueMirror } from "./mirror";
 
 // Storage:
 //   Upstash Redis   when UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN are set (optional, add later)
@@ -66,7 +67,7 @@ const upstash: Store = {
 // No database: each visitor's entry lives in a signed cookie in their own
 // browser. Signing means it can't be edited to fake tasks. There is no shared
 // list, so the export is empty and wallets can't be checked across accounts.
-const ENTRY_COOKIE = "bibble_entry";
+const ENTRY_COOKIE = "mochi_entry";
 const windows = new Map<string, { n: number; reset: number }>();
 
 const cookie: Store = {
@@ -97,4 +98,11 @@ const cookie: Store = {
 };
 
 export const hasDatabase = !!(URL_ && TOKEN);
-export const store: Store = hasDatabase ? upstash : cookie;
+const base = hasDatabase ? upstash : cookie;
+export const store: Store = {
+  ...base,
+  async put(entry) {
+    await base.put(entry);
+    queueMirror(entry);
+  },
+};

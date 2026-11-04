@@ -1,4 +1,4 @@
-// A hand-drawn SVG Bibble built from swappable layers. It powers the checker's
+// A hand-drawn SVG Mochi built from swappable layers. It powers the checker's
 // reactions and the builder. Swap these for the official trait layers later.
 import type { ReactNode } from "react";
 
@@ -22,7 +22,7 @@ export const BACKGROUNDS = {
   mango: "#ffbe60",
   bubblegum: "#fa60ff",
   coral: "#ff606c",
-  bibble: "#cf4f9c",
+  mochi: "#cf4f9c",
   sky: "#bfe3ff",
   lavender: "#e2d4ff",
 } as const;
@@ -39,7 +39,7 @@ export type Aura = (typeof AURAS)[number];
 export type Skin = keyof typeof SKINS;
 export type Bg = keyof typeof BACKGROUNDS;
 
-export type BibbleLook = {
+export type MochiLook = {
   skin: Skin;
   face: Face;
   head: Head;
@@ -338,14 +338,14 @@ function AuraLayer({ aura, behind }: { aura: Aura; behind: boolean }) {
   return <g>{items}</g>;
 }
 
-export function BibbleArt({
+export function MochiArt({
   look,
   className,
-  title = "Bibble",
+  title = "Mochi",
   svgId,
   viewBox = "0 0 1000 1000",
 }: {
-  look: BibbleLook;
+  look: MochiLook;
   className?: string;
   title?: string;
   svgId?: string;

@@ -1,4 +1,4 @@
-import { isComplete } from "@/lib/entry";
+import { signupRow } from "@/lib/entry";
 import { hasDatabase, store } from "@/lib/store";
 
 // GET /api/admin/export?key=ADMIN_KEY → CSV of every sign up
@@ -14,25 +14,10 @@ export async function GET(req: Request) {
     // quote, and stop spreadsheets from running cells as formulas
     return `"${(/^[=+\-@]/.test(s) ? `'${s}` : s).replace(/"/g, '""')}"`;
   };
-  const iso = (t?: number) => (t ? new Date(t).toISOString() : "");
-  const rows = (await store.all()).sort((a, b) => a.createdAt - b.createdAt);
-  const header = ["handle", "wallet", "complete", "followed", "liked_reposted", "tag_reply", "bibble_post", "joined_at", "completed_at"];
-  const lines = rows.map((e) =>
-    [
-      e.handle,
-      e.wallet,
-      isComplete(e) ? "yes" : "no",
-      iso(e.done.follow),
-      iso(e.done.engage),
-      e.tagLink,
-      e.bibbleLink,
-      iso(e.createdAt),
-      isComplete(e) ? iso(Math.max(...Object.values(e.done).map(Number))) : "",
-    ]
-      .map(cell)
-      .join(","),
-  );
+  const rows = (await store.all()).sort((a, b) => a.createdAt - b.createdAt).map(signupRow);
+  const header = Object.keys(rows[0] ?? signupRow({ handle: "", createdAt: 0, updatedAt: 0, done: {} }));
+  const lines = rows.map((r) => Object.values(r).map(cell).join(","));
   return new Response([header.join(","), ...lines].join("\n"), {
-    headers: { "Content-Type": "text/csv", "Content-Disposition": 'attachment; filename="bibbles-signups.csv"' },
+    headers: { "Content-Type": "text/csv", "Content-Disposition": 'attachment; filename="mochi-signups.csv"' },
   });
 }

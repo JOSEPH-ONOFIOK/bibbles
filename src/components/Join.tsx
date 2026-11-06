@@ -291,24 +291,10 @@ export function Join() {
                 ) : (
                   <>
                     <p className="text-sm font-semibold text-ink/70">
-                      {PINNED_ID
-                        ? "Reply under the pinned post and tag at least one friend, then paste your reply's link."
-                        : `Post on X tagging ${X_HANDLE} and at least one friend, then paste your post's link.`}
+                      Reply under the pinned post and tag at least one friend, then paste your reply&apos;s link.
                     </p>
-                    <button
-                      onClick={() =>
-                        openX(
-                          intent(
-                            "post",
-                            PINNED_ID
-                              ? { in_reply_to: PINNED_ID, text: "Getting my Mochi 🩷 come with me " }
-                              : { text: `Getting my Mochi 🩷 with ${X_HANDLE} come with me ` },
-                          ),
-                        )
-                      }
-                      className="btn mt-3 px-4! py-2! text-base!"
-                    >
-                      <XLogo /> {PINNED_ID ? "Reply on X" : "Post on X"}
+                    <button onClick={() => openX(PINNED_POST)} className="btn mt-3 px-4! py-2! text-base!">
+                      <XLogo /> Go to pinned post
                     </button>
                     <LinkProof task="tag" placeholder="https://x.com/you/status/…" />
                   </>

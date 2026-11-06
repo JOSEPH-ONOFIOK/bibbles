@@ -354,7 +354,7 @@ export function Join() {
                         )}{" "}
                         Download it as a PNG.
                       </li>
-                      <li>Post it on X. The post must tag {X_HANDLE} and include your wallet. We fill that in for you.</li>
+                      <li>Post it on X. The post must tag {X_HANDLE} </li>
                       <li>Attach the PNG, post, then paste your post&apos;s link here.</li>
                     </ol>
                     <div className="mt-3 flex flex-wrap gap-2">

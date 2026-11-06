@@ -283,7 +283,7 @@ export function Join() {
                   </div>
               </Step>
 
-              <Step n={3} title="Tag a friend" done={done("tag")}>
+              <Step n={3} title="Tag a friend or two on the pinned tweet and drop your comment" done={done("tag")}>
                 {done("tag") ? (
                   <a href={entry.tagLink} target="_blank" rel="noreferrer" className="text-sm font-bold underline">
                     See your post

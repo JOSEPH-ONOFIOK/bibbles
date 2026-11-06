@@ -13,7 +13,10 @@ import {
 } from "./MochiArt";
 import { burst, burstFrom } from "@/lib/burst";
 import { X_HANDLE } from "@/lib/mochi";
+import { AIRDROP_VOTES } from "@/lib/mochi";
 import { downloadMyMochi, setMyMochiName, useMyMochi } from "@/lib/myMochi";
+import { useSession } from "./Session";
+import { useWall } from "./WallContext";
 
 type Tab = keyof MochiLook;
 
@@ -36,6 +39,60 @@ const randomName = () => `${pick(FIRST)} ${pick(LAST)}`;
 const pretty = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const START: MochiLook = { skin: "blush", face: "sparkle", head: "halo", fit: "jersey", aura: "hearts", bg: "lime" };
+
+// Puts the Mochi on the gallery wall. Shows what's missing until it can.
+function DisplayButton({ look, name, from }: { look: MochiLook; name: string; from: React.RefObject<HTMLDivElement | null> }) {
+  const { entry } = useSession();
+  const { on, me, refresh, galleryChanged } = useWall();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (!on) return null;
+
+  const show = async () => {
+    setBusy(true);
+    setError(null);
+    const res = await fetch("/api/gallery", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name, look }),
+    });
+    const d = await res.json().catch(() => ({ error: "Something went wrong. Please try again." }));
+    setBusy(false);
+    if (d.error) return setError(d.error);
+    if (from.current) burstFrom(from.current, "hearts", 12);
+    refresh();
+    galleryChanged();
+  };
+
+  return (
+    <div className="mt-4 rounded-2xl border-4 border-ink bg-[#ccffb2] p-3">
+      <p className="text-sm font-bold">
+        Put your Mochi in the gallery. {AIRDROP_VOTES} votes secures a free airdrop.
+      </p>
+      <div className="mt-2">
+        {me?.displayed ? (
+          <a href="#gallery" className="btn px-4! py-1.5! text-base!">
+            See it in the gallery
+          </a>
+        ) : !entry ? (
+          <a href="#join" className="btn px-4! py-1.5! text-base!">
+            Connect X first
+          </a>
+        ) : !entry.wallet ? (
+          <a href="#join" className="btn px-4! py-1.5! text-base!">
+            Add your wallet first
+          </a>
+        ) : (
+          <button onClick={show} disabled={busy} className="btn btn-pink px-4! py-1.5! text-base!">
+            {busy ? "Hanging it up…" : "Put it in the gallery"}
+          </button>
+        )}
+      </div>
+      {!me?.displayed && entry?.wallet && <p className="mt-2 text-xs font-semibold text-ink/70">You get one spot, and it can&apos;t be changed after, so make it count.</p>}
+      {error && <p className="mt-2 text-sm font-bold text-[#c2185b]">{error}</p>}
+    </div>
+  );
+}
 
 export function Builder() {
   const [look, setLook] = useState<MochiLook>(START);
@@ -156,6 +213,7 @@ export function Builder() {
             Post it
           </a>
         </div>
+        <DisplayButton look={look} name={name} from={stage} />
         <p className="mt-3 text-xs font-semibold text-ink/60">Fan-made preview traits. Real collection traits may differ.</p>
       </div>
     </div>

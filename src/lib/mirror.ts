@@ -1,5 +1,5 @@
 import { after } from "next/server";
-import { signupRow, type Entry, type SignupRow } from "./entry";
+import { signupRow, type Entry, type RowStats, type SignupRow } from "./entry";
 
 // Sends every sign-up to a Google Sheet (scripts/apps-script/README.md).
 // Each save sends the whole row, so the next save repairs a failed one.
@@ -20,8 +20,8 @@ async function send(row: SignupRow) {
 }
 
 // Runs after the response, so a slow sheet never slows a visitor down.
-export function queueMirror(entry: Entry) {
+export function queueMirror(entry: Entry, stats?: RowStats) {
   if (!URL_) return;
-  const row = signupRow(entry); // copy now: the entry can change later in the request
+  const row = signupRow(entry, stats); // copy now: the entry can change later in the request
   after(() => send(row).catch((e) => console.error("Sheet copy failed", row.handle, e)));
 }

@@ -16,14 +16,20 @@ export type Entry = {
   // Like and repost are tracked separately; "engage" completes when both are clicked
   liked?: boolean;
   reposted?: boolean;
+  // Who invited them, and a hash of the network they added their wallet from
+  referredBy?: string;
+  ip?: string;
 };
 
 export const TASK_ORDER: TaskId[] = ["follow", "engage", "tag", "wallet", "mochi"];
 
 export const isComplete = (e: Pick<Entry, "done">) => TASK_ORDER.every((t) => e.done[t]);
 
-// One sign-up as a flat row, used by the CSV export and the Google Sheet
-export function signupRow(e: Entry) {
+export type RowStats = { referrals?: number; votes?: number; airdrop?: boolean };
+
+// One sign-up as a flat row, used by the CSV export and the Google Sheet.
+// Stats live outside the entry, so a row sent without them leaves those cells as they are.
+export function signupRow(e: Entry, stats: RowStats = {}) {
   const iso = (t?: number) => (t ? new Date(t).toISOString() : "");
   const complete = isComplete(e);
   return {
@@ -37,15 +43,20 @@ export function signupRow(e: Entry) {
     joined_at: iso(e.createdAt),
     completed_at: complete ? iso(Math.max(...Object.values(e.done).map(Number))) : "",
     updated_at: iso(e.updatedAt),
+    referred_by: e.referredBy ?? "",
+    referrals: stats.referrals === undefined ? "" : String(stats.referrals),
+    votes: stats.votes === undefined ? "" : String(stats.votes),
+    airdrop: stats.airdrop ? "yes" : "",
   };
 }
 export type SignupRow = ReturnType<typeof signupRow>;
 
-export type PublicEntry = Omit<Entry, "xid">;
+export type PublicEntry = Omit<Entry, "xid" | "ip">;
 
 export function toPublic(e: Entry): PublicEntry {
   const copy = { ...e };
   delete copy.xid;
+  delete copy.ip;
   return copy;
 }
 

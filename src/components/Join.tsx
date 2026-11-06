@@ -5,7 +5,9 @@ import { useSession } from "./Session";
 import { FEATURED, X_HANDLE, X_URL } from "@/lib/mochi";
 import { burstFrom } from "@/lib/burst";
 import { PINNED_ID, PINNED_POST, TASK_ORDER, WALLET, isComplete, type TaskId } from "@/lib/entry";
-import { downloadMyMochi, useMyMochi } from "@/lib/myMochi";
+import { downloadMyMochi, readInvite, useMyMochi } from "@/lib/myMochi";
+import { InviteLink } from "./Referrals";
+import { useWall } from "./WallContext";
 
 const US = X_HANDLE.replace("@", "");
 
@@ -162,6 +164,7 @@ function Progress({ count }: { count: number }) {
 export function Join() {
   const { ready, auth, entry, notice, connect, disconnect, task } = useSession();
   const { name, touched } = useMyMochi();
+  const { on, refresh } = useWall();
   // null until they type, so the saved wallet shows by default
   const [walletDraft, setWallet] = useState<string | null>(null);
   const [walletError, setWalletError] = useState<string | null>(null);
@@ -185,9 +188,10 @@ export function Join() {
       return;
     }
     setSavingWallet(true);
-    const r = await task({ task: "wallet", wallet: wallet.trim() });
+    const r = await task({ task: "wallet", wallet: wallet.trim(), ref: readInvite() });
     setSavingWallet(false);
     setWalletError(r.error ?? null);
+    if (!r.error) refresh();
   };
 
   const postText = `Meet ${name}, my Mochi 🩷\n\n${X_HANDLE}\n\n${entry?.wallet ?? ""}`;
@@ -323,6 +327,11 @@ export function Join() {
                   </div>
                   {walletError && <p className="mt-2 text-sm font-bold text-[#c2185b]">{walletError}</p>}
                 </form>
+                {on && done("wallet") && (
+                  <div className="mt-3">
+                    <InviteLink handle={entry.handle} />
+                  </div>
+                )}
               </Step>
 
               <Step n={5} title="Post your Mochi" done={done("mochi")}>

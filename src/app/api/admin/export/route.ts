@@ -1,5 +1,6 @@
 import { signupRow } from "@/lib/entry";
 import { hasDatabase, store } from "@/lib/store";
+import { allStats } from "@/lib/wall";
 
 // GET /api/admin/export?key=ADMIN_KEY → CSV of every sign up
 export async function GET(req: Request) {
@@ -14,7 +15,8 @@ export async function GET(req: Request) {
     // quote, and stop spreadsheets from running cells as formulas
     return `"${(/^[=+\-@]/.test(s) ? `'${s}` : s).replace(/"/g, '""')}"`;
   };
-  const rows = (await store.all()).sort((a, b) => a.createdAt - b.createdAt).map(signupRow);
+  const stats = await allStats();
+  const rows = (await store.all()).sort((a, b) => a.createdAt - b.createdAt).map((e) => signupRow(e, stats(e.handle)));
   const header = Object.keys(rows[0] ?? signupRow({ handle: "", createdAt: 0, updatedAt: 0, done: {} }));
   const lines = rows.map((r) => Object.values(r).map(cell).join(","));
   return new Response([header.join(","), ...lines].join("\n"), {

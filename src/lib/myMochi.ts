@@ -6,6 +6,26 @@ import { useSyncExternalStore } from "react";
 let state = { name: "Lil Mochi", touched: false };
 const listeners = new Set<() => void>();
 
+const INVITE = "mochi_ref";
+
+// A friend's invite from ?ref=handle, kept until this visitor adds their wallet
+export function rememberInvite() {
+  try {
+    const q = new URLSearchParams(location.search);
+    const ref = q.get("ref")?.toLowerCase();
+    if (ref && /^\w{1,15}$/.test(ref)) localStorage.setItem(INVITE, ref);
+    if (q.has("ref")) history.replaceState(null, "", `${location.pathname}${location.hash}`);
+  } catch {}
+}
+
+export function readInvite() {
+  try {
+    return localStorage.getItem(INVITE);
+  } catch {
+    return null;
+  }
+}
+
 export function setMyMochiName(name: string, touched = true) {
   state = { name, touched: state.touched || touched };
   listeners.forEach((l) => l());

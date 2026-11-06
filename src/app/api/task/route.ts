@@ -1,13 +1,15 @@
 import { authed, bad } from "@/lib/api";
+import { ipHash } from "@/lib/auth";
 import { PINNED_ID, TASK_ORDER, WALLET, toPublic, type TaskId } from "@/lib/entry";
-import { store } from "@/lib/store";
+import { hasDatabase, store } from "@/lib/store";
+import { creditReferral } from "@/lib/wall";
 import { verifyMochiPost, verifyTagReply } from "@/lib/xpost";
 
 // POST { task, ... } completes one task for the signed-in account.
 //   follow                       clicked the follow button
 //   engage  { action: like|repost }  clicked like or repost; done when both are
 //   tag     { link }             reply under the pinned post tagging a friend (verified)
-//   wallet  { wallet }           EVM address, one per account
+//   wallet  { wallet, ref? }     EVM address, one per account. ref is the friend who invited them
 //   mochi  { link }             post with their Mochi, tagging us, with their wallet (verified)
 export async function POST(req: Request) {
   try {
@@ -59,7 +61,11 @@ async function complete(req: Request) {
       if (owner && owner !== entry.handle.toLowerCase()) return bad("That wallet is already used by another account.");
       await store.claimWallet(wallet, entry.handle, entry.wallet);
       entry.wallet = wallet;
-      entry.done.wallet ??= now;
+      if (!entry.done.wallet) {
+        entry.done.wallet = now;
+        entry.ip = ipHash(req);
+        if (hasDatabase) await creditReferral(entry, body.ref);
+      }
       break;
     }
 

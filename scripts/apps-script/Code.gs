@@ -1,8 +1,8 @@
 /**
  * MOCHI sign-ups — Google Apps Script web app.
  *
- * The only shared list of sign-ups: the site keeps each visitor's progress in
- * their browser and sends their row here. Nothing is read back from this sheet.
+ * A readable list of sign-ups. The site saves each change to its database and
+ * sends the row here. Nothing is read back from this sheet.
  *
  * Contract with src/lib/mirror.ts:
  *
@@ -17,7 +17,7 @@
  */
 
 /** Bumped whenever this file changes, so `?version` shows which copy is deployed. */
-var SCRIPT_VERSION = 2;
+var SCRIPT_VERSION = 3;
 
 var SIGNUPS = 'Signups';
 
@@ -33,6 +33,10 @@ var HEADERS = [
   'Joined At',
   'Completed At',
   'Updated At',
+  'Referred By',
+  'Referrals',
+  'Votes',
+  'Airdrop',
 ];
 
 /** Which field of a row from the site fills each column. */
@@ -47,6 +51,10 @@ var FIELDS = {
   'Joined At': 'joined_at',
   'Completed At': 'completed_at',
   'Updated At': 'updated_at',
+  'Referred By': 'referred_by',
+  'Referrals': 'referrals',
+  'Votes': 'votes',
+  'Airdrop': 'airdrop',
 };
 
 // --- entry points ---------------------------------------------------------
@@ -109,8 +117,8 @@ function saveAll(rows) {
 }
 
 /**
- * Nothing else holds this data, so an update never blanks a cell: someone who
- * cleared their browser starts over on the site but keeps their row here.
+ * An update never blanks a cell, because not every update carries every column.
+ * Referral and vote counts only arrive with the updates that change them.
  * Returns null for an update older than what is stored; they can arrive out of order.
  */
 function buildRow(e, old) {

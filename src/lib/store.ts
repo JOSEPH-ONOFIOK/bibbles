@@ -4,7 +4,8 @@ import type { Entry } from "./entry";
 import { queueMirror } from "./mirror";
 
 // Storage:
-//   Upstash Redis   when UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN are set (optional, add later)
+//   Upstash Redis   when UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN are set.
+//                   Referrals, the gallery and votes need it.
 //   Browser cookie  otherwise: each visitor's progress is kept in a signed cookie
 
 interface Store {
@@ -24,7 +25,7 @@ const key = (h: string) => h.toLowerCase();
 const URL_ = process.env.UPSTASH_REDIS_REST_URL;
 const TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-async function redis<T = unknown>(...cmd: (string | number)[]): Promise<T> {
+export async function redis<T = unknown>(...cmd: (string | number)[]): Promise<T> {
   const res = await fetch(URL_!, {
     method: "POST",
     headers: { Authorization: `Bearer ${TOKEN}` },
@@ -99,8 +100,32 @@ const cookie: Store = {
 
 export const hasDatabase = !!(URL_ && TOKEN);
 const base = hasDatabase ? upstash : cookie;
+
+// Someone who started while progress lived in their browser keeps it: the first
+// time they come back, their signed cookie moves into the database.
+async function importCookieEntry(handle: string) {
+  const old = await cookie.get(handle);
+  if (!old) return null;
+  if (old.wallet) {
+    const owner = await upstash.walletOwner(old.wallet);
+    if (owner && owner !== key(old.handle)) {
+      // Another account claimed this wallet first
+      delete old.wallet;
+      delete old.done.wallet;
+      delete old.done.mochi;
+      delete old.mochiLink;
+    } else await upstash.claimWallet(old.wallet, old.handle);
+  }
+  await upstash.put(old);
+  return old;
+}
+
 export const store: Store = {
   ...base,
+  async get(handle) {
+    const entry = await base.get(handle);
+    return entry ?? (hasDatabase ? importCookieEntry(handle) : null);
+  },
   async put(entry) {
     await base.put(entry);
     queueMirror(entry);

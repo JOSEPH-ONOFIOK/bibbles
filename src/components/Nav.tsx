@@ -6,6 +6,8 @@ import { useSession } from "./Session";
 const LINKS = [
   { href: "#join", label: "Join" },
   { href: "#builder", label: "Builder" },
+  { href: "#gallery", label: "Gallery" },
+  { href: "#referrals", label: "Leaderboard" },
   { href: "#stickers", label: "Stickers" },
 ];
 

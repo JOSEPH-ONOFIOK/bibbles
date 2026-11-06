@@ -80,5 +80,8 @@ export const FEATURED: FeaturedMochi[] = [
 export const SUPPLY = 4444;
 export const SUPPLY_LABEL = SUPPLY.toLocaleString("en-US");
 
+// Votes a Mochi in the gallery needs to secure a free airdrop
+export const AIRDROP_VOTES = 100;
+
 export const X_URL = "https://x.com/mochimochirh";
 export const X_HANDLE = "@mochimochirh";

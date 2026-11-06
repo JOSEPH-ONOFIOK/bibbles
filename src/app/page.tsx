@@ -1,12 +1,15 @@
 import { Ambient } from "@/components/Ambient";
 import { Builder } from "@/components/Builder";
 import { Footer } from "@/components/Footer";
+import { Gallery } from "@/components/Gallery";
 import { Hero } from "@/components/Hero";
 import { Join } from "@/components/Join";
 import { Nav } from "@/components/Nav";
 import { PeekMochi } from "@/components/PeekMochi";
 import { SessionProvider } from "@/components/Session";
+import { Referrals } from "@/components/Referrals";
 import { Stickers } from "@/components/Stickers";
+import { WallProvider } from "@/components/WallContext";
 import { FEATURED } from "@/lib/mochi";
 
 // A Mochi peeking over the bottom edge of a section, on one side.
@@ -24,26 +27,36 @@ function EdgePeek({ index, side }: { index: number; side: "left" | "right" }) {
 export default function Home() {
   return (
     <SessionProvider>
-      <Ambient />
-      <Nav />
-      <main>
-        <Hero />
+      <WallProvider>
+        <Ambient />
+        <Nav />
+        <main>
+          <Hero />
 
-        <section id="join" data-bg="#e2d4ff" className="scroll-mt-20 pt-24">
-          <Join />
-          <EdgePeek index={0} side="right" />
-        </section>
+          <section id="join" data-bg="#e2d4ff" className="scroll-mt-20 pt-24">
+            <Join />
+            <EdgePeek index={0} side="right" />
+          </section>
 
-        <section id="builder" data-bg="#bfe3ff" className="scroll-mt-20 border-t-4 border-ink pt-24">
-          <Builder />
-          <EdgePeek index={2} side="left" />
-        </section>
+          <section id="builder" data-bg="#bfe3ff" className="scroll-mt-20 border-t-4 border-ink pt-24">
+            <Builder />
+            <EdgePeek index={2} side="left" />
+          </section>
 
-        <section id="stickers" data-bg="#ffbe60" className="scroll-mt-20 border-t-4 border-ink pt-24 pb-24">
-          <Stickers />
-        </section>
-      </main>
-      <Footer />
+          <section id="gallery" data-bg="#ccffb2" className="scroll-mt-20 border-t-4 border-ink pt-24 pb-24">
+            <Gallery />
+          </section>
+
+          <section id="referrals" data-bg="#ffe5b4" className="scroll-mt-20 border-t-4 border-ink pt-24 pb-24">
+            <Referrals />
+          </section>
+
+          <section id="stickers" data-bg="#ffbe60" className="scroll-mt-20 border-t-4 border-ink pt-24 pb-24">
+            <Stickers />
+          </section>
+        </main>
+        <Footer />
+      </WallProvider>
     </SessionProvider>
   );
 }

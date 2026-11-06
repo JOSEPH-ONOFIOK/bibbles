@@ -105,6 +105,11 @@ export function clientIp(req: Request) {
   return req.headers.get("x-forwarded-for")?.split(",")[0].trim() || req.headers.get("x-real-ip") || "unknown";
 }
 
+// A network, hashed: enough to compare two visitors without storing their IP
+export function ipHash(req: Request) {
+  return createHmac("sha256", SECRET || "x").update(clientIp(req)).digest("base64url").slice(0, 16);
+}
+
 export function siteOrigin(req: Request) {
   return process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || new URL(req.url).origin;
 }

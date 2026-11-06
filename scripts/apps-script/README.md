@@ -1,9 +1,9 @@
 # Mochi sign-ups sheet: deploy guide
 
-`Code.gs` is a Google Apps Script web app that keeps the list of sign-ups in a
-Google Sheet. The site has no database: each visitor's progress lives in their
-browser, so **this sheet is the only shared list**. Visitors never wait for it,
-and if it goes down the site keeps working.
+`Code.gs` is a Google Apps Script web app that keeps a readable list of sign-ups
+in a Google Sheet. Upstash is the database once it is connected; before that this
+sheet is the only shared list. Visitors never wait for it, and if it goes down the
+site keeps working.
 
 ## 1. Make the spreadsheet
 
@@ -72,13 +72,17 @@ A new deployment gets a new URL. To keep the existing one:
 | Followed, Liked + Reposted | When they did each |
 | Tag Reply, Mochi Post | Links to their verified posts |
 | Joined At, Completed At, Updated At | Timestamps in UTC |
+| Referred By | Who invited them |
+| Referrals | Friends they brought in, updated on each new referral |
+| Votes, Airdrop | Filled in when their gallery Mochi reaches the airdrop goal |
 
 Sorting or filtering the tab is safe: handles are found by name, never by row
 position. Filled-in cells are kept: someone who clears their browser and starts
 over keeps their row, and it stays `yes` once complete.
 
-The site cannot check wallets across accounts without a database, so the same
-wallet can appear on two rows. Check for duplicates before using the list.
+For exact referral, vote and airdrop numbers use the CSV export at
+`/api/admin/export?key=...`, which is worked out from the database. Votes in the
+sheet only update when someone secures an airdrop.
 
 ## Troubleshooting
 

@@ -67,7 +67,7 @@ function DisplayButton({ look, name, from }: { look: MochiLook; name: string; fr
   return (
     <div className="mt-4 rounded-2xl border-4 border-ink bg-[#ccffb2] p-3">
       <p className="text-sm font-bold">
-        Put your Mochi in the gallery. {AIRDROP_VOTES} votes secures a free airdrop.
+        Put your Mochi in the gallery. {AIRDROP_VOTES} votes secures a free {TOKEN} airdrop.
       </p>
       <div className="mt-2">
         {me?.displayed ? (

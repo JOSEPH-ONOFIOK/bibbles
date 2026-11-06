@@ -26,8 +26,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    site: "@mochimochirh",
-    creator: "@mochimochirh",
+    site: "@themochieffect",
+    creator: "@themochieffect",
     title: TITLE,
     description: DESCRIPTION,
   },

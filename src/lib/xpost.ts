@@ -3,7 +3,8 @@
 
 import { X_HANDLE } from "./mochi";
 
-const US = X_HANDLE.replace("@", "").toLowerCase();
+// Our X account, then the one we used before: posts tagging it still count
+const US = [X_HANDLE.replace("@", "").toLowerCase(), "mochimochirh"];
 const POST_LINK = /(?:https?:\/\/)?(?:www\.|mobile\.)?(?:x|twitter)\.com\/(\w{1,15})\/status(?:es)?\/(\d+)/i;
 
 type PublicPost = { author: string; text: string; replyTo?: string; hasImage: boolean };
@@ -47,7 +48,7 @@ async function load(link: string, handle: string): Promise<{ post: PublicPost; i
 }
 
 const tagsAFriend = (text: string, handle: string) => {
-  const skip = new Set([US, handle.toLowerCase()]);
+  const skip = new Set([...US, handle.toLowerCase()]);
   return [...text.matchAll(/@(\w{1,15})/g)].some((t) => !skip.has(t[1].toLowerCase()));
 };
 
@@ -65,7 +66,7 @@ export async function verifyMochiPost(link: string, handle: string, wallet: stri
   const r = await load(link, handle);
   if ("ok" in r) return r;
   const text = r.post.text.toLowerCase();
-  if (!new RegExp(`@${US}\\b`).test(text)) return { ok: false, error: `Your post needs to tag ${X_HANDLE}.` };
+  if (!new RegExp(`@(${US.join("|")})\\b`).test(text)) return { ok: false, error: `Your post needs to tag ${X_HANDLE}.` };
   if (!text.includes(wallet.toLowerCase())) return { ok: false, error: "Your post needs to include the wallet you entered in step 4." };
   if (!r.post.hasImage) return { ok: false, error: "Attach your Mochi image to the post." };
   return { ok: true, link: `https://x.com/${r.post.author}/status/${r.id}` };

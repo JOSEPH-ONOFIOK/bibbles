@@ -128,7 +128,7 @@ export function Gallery() {
           The Gallery
         </h1>
         <p className="mx-auto mt-2 max-w-xl font-bold text-ink/80">
-          Hang your Mochi on the wall and vote for your favourites. Reach {AIRDROP_VOTES} votes and you secure a free airdrop. {POWERED}.
+          Hang your Mochi on the wall and vote for your favourites. Reach {AIRDROP_VOTES} votes and you secure a free $MOCHI airdrop. {POWERED}.
         </p>
       </div>
 

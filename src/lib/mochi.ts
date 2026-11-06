@@ -96,5 +96,5 @@ export const FACTS = [
 // Votes a Mochi in the gallery needs to secure a free airdrop
 export const AIRDROP_VOTES = 100;
 
-export const X_URL = "https://x.com/mochimochirh";
-export const X_HANDLE = "@mochimochirh";
+export const X_URL = "https://x.com/themochieffect";
+export const X_HANDLE = "@themochieffect";

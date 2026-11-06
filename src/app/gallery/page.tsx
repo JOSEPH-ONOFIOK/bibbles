@@ -3,7 +3,7 @@ import { Gallery } from "@/components/Gallery";
 import { Shell } from "@/components/Shell";
 import { AIRDROP_VOTES } from "@/lib/mochi";
 
-const description = `Vote for your favourite Mochis. Reach ${AIRDROP_VOTES} votes on yours and you secure a free airdrop. Free mint, powered by $MOCHI.`;
+const description = `Vote for your favourite Mochis. Reach ${AIRDROP_VOTES} votes on yours and you secure a free $MOCHI airdrop. Free mint, powered by $MOCHI.`;
 
 export const metadata: Metadata = {
   title: "Gallery",

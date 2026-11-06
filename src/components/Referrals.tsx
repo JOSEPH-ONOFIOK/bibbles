@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X_HANDLE } from "@/lib/mochi";
 import { SITE_URL } from "@/lib/site";
 import { useSession } from "./Session";
@@ -38,6 +38,40 @@ export function InviteLink({ handle }: { handle: string }) {
   );
 }
 
+// Shown once, right after someone saves their wallet for the first time
+export function InvitePopup({ handle, onClose }: { handle: string; onClose: () => void }) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    dialog.current?.showModal();
+  }, []);
+
+  return (
+    <dialog
+      ref={dialog}
+      onClose={onClose}
+      onClick={(e) => e.target === dialog.current && dialog.current.close()}
+      aria-labelledby="invite-title"
+      className="chunk pop-in m-auto w-[min(92vw,30rem)] p-5 text-ink backdrop:bg-ink/60 sm:p-6"
+    >
+      <h2 id="invite-title" className="text-center font-display text-4xl text-pink" style={{ textShadow: "2px 2px 0 #161616" }}>
+        Here&apos;s your referral link
+      </h2>
+      <p className="mt-2 text-center font-bold">Invite friends to join the Top Recruiters and secure one of multiple GTD free mint spots.</p>
+      <div className="mt-4">
+        <InviteLink handle={handle} />
+      </div>
+      <div className="mt-4 flex flex-wrap justify-center gap-2">
+        <Link href="/leaderboard" onClick={() => dialog.current?.close()} className="btn btn-pink px-4! py-1.5! text-base!">
+          See Top Recruiters
+        </Link>
+        <button onClick={() => dialog.current?.close()} className="btn px-4! py-1.5! text-base!">
+          Close
+        </button>
+      </div>
+    </dialog>
+  );
+}
+
 export function Referrals() {
   const { entry } = useSession();
   const { on, ready, top, me } = useWall();
@@ -48,7 +82,7 @@ export function Referrals() {
         <h1 className="font-display text-6xl text-white" style={{ textShadow: "4px 4px 0 #161616" }}>
           Top Recruiters
         </h1>
-        <p className="mt-2 font-bold text-white">Who has brought the most friends to the Mochis.</p>
+        <p className="mt-2 font-bold text-white">Bring the most friends to the Mochis and secure one of multiple GTD free mint spots.</p>
       </div>
 
       <div className="chunk mt-8 p-5 sm:p-8">

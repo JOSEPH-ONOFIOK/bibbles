@@ -6,7 +6,7 @@ import { FEATURED, X_HANDLE, X_URL } from "@/lib/mochi";
 import { burstFrom } from "@/lib/burst";
 import { PINNED_ID, PINNED_POST, TASK_ORDER, WALLET, isComplete, type TaskId } from "@/lib/entry";
 import { downloadMyMochi, readInvite, useMyMochi } from "@/lib/myMochi";
-import { InviteLink } from "./Referrals";
+import { InviteLink, InvitePopup } from "./Referrals";
 import { useWall } from "./WallContext";
 
 const US = X_HANDLE.replace("@", "");
@@ -170,6 +170,7 @@ export function Join() {
   const [walletError, setWalletError] = useState<string | null>(null);
   const [savingWallet, setSavingWallet] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
+  const [showInvite, setShowInvite] = useState(false);
   const allDone = useRef<HTMLDivElement>(null);
 
   const wallet = walletDraft ?? entry?.wallet ?? "";
@@ -188,16 +189,20 @@ export function Join() {
       return;
     }
     setSavingWallet(true);
+    const first = !entry?.wallet;
     const r = await task({ task: "wallet", wallet: wallet.trim(), ref: readInvite() });
     setSavingWallet(false);
     setWalletError(r.error ?? null);
-    if (!r.error) refresh();
+    if (r.error) return;
+    refresh();
+    if (first && on) setShowInvite(true);
   };
 
   const postText = `Meet ${name}, my Mochi 🩷\n\n${X_HANDLE}\n\n${entry?.wallet ?? ""}`;
 
   return (
     <div className="mx-auto max-w-3xl px-4">
+      {showInvite && entry && <InvitePopup handle={entry.handle} onClose={() => setShowInvite(false)} />}
       <div className="text-center">
         <h2 className="font-display text-6xl text-white" style={{ textShadow: "4px 4px 0 #161616" }}>
           Join the Mochis

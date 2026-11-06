@@ -14,7 +14,7 @@ import {
 } from "./MochiArt";
 import { burst, burstFrom } from "@/lib/burst";
 import { X_HANDLE } from "@/lib/mochi";
-import { AIRDROP_VOTES } from "@/lib/mochi";
+import { AIRDROP_VOTES, TOKEN } from "@/lib/mochi";
 import { downloadMyMochi, setMyMochiName, useMyMochi } from "@/lib/myMochi";
 import { useSession } from "./Session";
 import { useWall } from "./WallContext";
@@ -129,7 +129,7 @@ export function Builder() {
   };
 
   const current = TABS.find((t) => t.key === tab)!;
-  const shareText = encodeURIComponent(`Meet ${name || "my Mochi"}, the Mochi I made 🩷 ${X_HANDLE}`);
+  const shareText = encodeURIComponent(`Meet ${name || "my Mochi"}, the ${TOKEN} I made 🩷 ${X_HANDLE}`);
 
   return (
     <div className="mx-auto grid max-w-5xl gap-8 px-4 md:grid-cols-[1fr_1fr]">
@@ -153,7 +153,7 @@ export function Builder() {
             <h2 className="font-display text-5xl text-pink" style={{ textShadow: "3px 3px 0 #161616" }}>
               Make a Mochi
             </h2>
-            <p className="mt-1 font-semibold text-ink/75">Mix and match, name it, take it home as a PFP.</p>
+            <p className="mt-1 font-semibold text-ink/75">Mix and match, name it, take it home as a PFP. Welcome to the {TOKEN} world.</p>
           </div>
           {/* Live mini preview on phones, where the big one scrolls out of view */}
           <div key={bump} className="pop-in h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-4 border-ink md:hidden">

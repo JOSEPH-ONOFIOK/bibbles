@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Mochi",
     short_name: "Mochi",
-    description: "4,444 soft, silly little Mochis.",
+    description: "4,444 little companions. Free mint, powered by $MOCHI.",
     start_url: "/",
     display: "standalone",
     background_color: "#cf4f9c",

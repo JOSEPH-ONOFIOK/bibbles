@@ -7,14 +7,14 @@ const chewy = Chewy({ variable: "--font-chewy", weight: "400", subsets: ["latin"
 const nunito = Nunito({ variable: "--font-nunito", subsets: ["latin"] });
 
 const TITLE = "Mochi";
-const DESCRIPTION = "4,444 soft, silly little Mochis. Build your own Mochi, connect X and join the Mochis.";
+const DESCRIPTION = "4,444 little companions coming to OpenSea on Robinhood Chain. Free mint, powered by $MOCHI. Build your own Mochi, connect X and join the Mochis.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: { default: TITLE, template: "%s · Mochi" },
   description: DESCRIPTION,
   applicationName: TITLE,
-  keywords: ["Mochi", "Mochis", "NFT", "PFP", "4444", "cute", "collection", "allowlist"],
+  keywords: ["Mochi", "Mochis", "$MOCHI", "free mint", "Robinhood Chain", "OpenSea", "NFT", "PFP", "4444", "cute", "collection", "allowlist"],
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",

@@ -52,6 +52,7 @@ export function Nav() {
           <span className="font-display text-2xl text-pink" style={{ textShadow: "2px 2px 0 #161616" }}>
             Mochi
           </span>
+          <span className="hidden rounded-full border-[3px] border-ink bg-[#fff1a8] px-2 font-display text-sm lg:inline">$MOCHI</span>
         </Link>
         <div className="ml-auto hidden items-center gap-1 sm:flex">
           {LINKS.map((l) => (

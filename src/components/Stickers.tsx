@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FEATURED, SUPPLY_LABEL } from "@/lib/mochi";
+import { FEATURED, POWERED, SUPPLY_LABEL } from "@/lib/mochi";
 import { burstFrom } from "@/lib/burst";
 
 const TILTS = [-6, 4, -3, 7, -5];
@@ -15,7 +15,7 @@ export function Stickers() {
         <h2 className="font-display text-6xl text-white" style={{ textShadow: "4px 4px 0 #161616" }}>
           The sticker sheet
         </h2>
-        <p className="mt-2 font-bold text-ink/80">{FEATURED.length} of {SUPPLY_LABEL}. Tap a sticker to flip it and peek at its traits.</p>
+        <p className="mt-2 font-bold text-ink/80">{FEATURED.length} of {SUPPLY_LABEL}. Tap a sticker to flip it and peek at its traits. {POWERED}.</p>
       </div>
 
       <div className="chunk dots mt-8 grid grid-cols-2 gap-x-4 gap-y-8 px-4 py-10 sm:grid-cols-3 sm:px-10 lg:grid-cols-5">

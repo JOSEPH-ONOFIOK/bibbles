@@ -1,4 +1,5 @@
 import { Builder } from "@/components/Builder";
+import { Facts } from "@/components/Facts";
 import { Hero } from "@/components/Hero";
 import { Join } from "@/components/Join";
 import { PeekMochi } from "@/components/PeekMochi";
@@ -22,6 +23,7 @@ export default function Home() {
   return (
     <Shell>
       <Hero />
+      <Facts />
 
       <section id="join" data-bg="#e2d4ff" className="scroll-mt-20 pt-24">
         <Join />

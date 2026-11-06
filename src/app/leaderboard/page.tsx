@@ -3,7 +3,7 @@ import { Referrals } from "@/components/Referrals";
 import { Shell } from "@/components/Shell";
 import { BRAND_PINK } from "@/lib/mochi";
 
-const description = "Bring the most friends to the Mochis and secure one of multiple GTD free mint spots.";
+const description = "Bring the most friends to the Mochis and secure one of multiple GTD free mint spots. Free mint, powered by $MOCHI.";
 
 export const metadata: Metadata = {
   title: "Leaderboard",

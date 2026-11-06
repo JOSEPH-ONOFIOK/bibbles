@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "./Session";
-import { FEATURED, X_HANDLE, X_URL } from "@/lib/mochi";
+import { FEATURED, POWERED, TOKEN, X_HANDLE, X_URL } from "@/lib/mochi";
 import { burstFrom } from "@/lib/burst";
 import { PINNED_ID, PINNED_POST, TASK_ORDER, WALLET, isComplete, type TaskId } from "@/lib/entry";
 import { downloadMyMochi, readInvite, useMyMochi } from "@/lib/myMochi";
@@ -168,6 +168,7 @@ export function Join() {
   // null until they type, so the saved wallet shows by default
   const [walletDraft, setWallet] = useState<string | null>(null);
   const [walletError, setWalletError] = useState<string | null>(null);
+  const [walletSaved, setWalletSaved] = useState(false);
   const [savingWallet, setSavingWallet] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
@@ -194,11 +195,12 @@ export function Join() {
     setSavingWallet(false);
     setWalletError(r.error ?? null);
     if (r.error) return;
+    setWalletSaved(!first);
     refresh();
     if (first && on) setShowInvite(true);
   };
 
-  const postText = `Meet ${name}, my Mochi 🩷\n\n${X_HANDLE}\n\n${entry?.wallet ?? ""}`;
+  const postText = `Meet ${name}, the ${TOKEN} I made 🩷\n\n${X_HANDLE}\n\n${entry?.wallet ?? ""}`;
 
   return (
     <div className="mx-auto max-w-3xl px-4">
@@ -207,7 +209,7 @@ export function Join() {
         <h2 className="font-display text-6xl text-white" style={{ textShadow: "4px 4px 0 #161616" }}>
           Join the Mochis
         </h2>
-        <p className="mt-2 font-bold text-ink/80">Connect your X, do five quick tasks, and you&apos;re in the running.</p>
+        <p className="mt-2 font-bold text-ink/80">Connect your X, do five quick tasks, and you&apos;re in the running. {POWERED}.</p>
       </div>
 
       <div className="chunk mt-8 p-5 sm:p-8">
@@ -313,7 +315,10 @@ export function Join() {
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <input
                       value={wallet}
-                      onChange={(e) => setWallet(e.target.value)}
+                      onChange={(e) => {
+                        setWallet(e.target.value);
+                        setWalletSaved(false);
+                      }}
                       placeholder="0x…"
                       spellCheck={false}
                       autoComplete="off"
@@ -331,6 +336,7 @@ export function Join() {
                     )}
                   </div>
                   {walletError && <p className="mt-2 text-sm font-bold text-[#c2185b]">{walletError}</p>}
+                  {walletSaved && <p className="pop-in mt-2 text-sm font-extrabold">Wallet updated.</p>}
                 </form>
                 {on && done("wallet") && (
                   <div className="mt-3">
@@ -385,7 +391,7 @@ export function Join() {
                 <p className="font-display text-4xl" style={{ textShadow: "3px 3px 0 #161616" }}>
                   You&apos;re all set, @{entry.handle}!
                 </p>
-                <p className="mt-1 font-bold">All five tasks done. Keep an eye on {X_HANDLE} for what&apos;s next.</p>
+                <p className="mt-1 font-bold">All five tasks done. Keep an eye on {X_HANDLE} for {TOKEN} news and what&apos;s next.</p>
                 <a href={X_URL} target="_blank" rel="noreferrer" className="btn mt-4 text-ink! text-base!">
                   <XLogo /> {X_HANDLE}
                 </a>

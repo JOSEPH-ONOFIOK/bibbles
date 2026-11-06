@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { burstFrom } from "@/lib/burst";
-import { AIRDROP_VOTES } from "@/lib/mochi";
+import { AIRDROP_VOTES, POWERED } from "@/lib/mochi";
 import { MochiArt, type MochiLook } from "./MochiArt";
 import { useSession } from "./Session";
 import { useWall } from "./WallContext";
@@ -128,7 +128,7 @@ export function Gallery() {
           The Gallery
         </h1>
         <p className="mx-auto mt-2 max-w-xl font-bold text-ink/80">
-          Hang your Mochi on the wall and vote for your favourites. Reach {AIRDROP_VOTES} votes and you secure a free airdrop.
+          Hang your Mochi on the wall and vote for your favourites. Reach {AIRDROP_VOTES} votes and you secure a free airdrop. {POWERED}.
         </p>
       </div>
 

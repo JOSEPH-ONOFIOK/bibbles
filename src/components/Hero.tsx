@@ -1,4 +1,4 @@
-import { FEATURED, BRAND_PINK, SUPPLY_LABEL } from "@/lib/mochi";
+import { FEATURED, BRAND_PINK, POWERED, SUPPLY_LABEL } from "@/lib/mochi";
 import { PeekMochi } from "./PeekMochi";
 import type { BurstKind } from "@/lib/burst";
 
@@ -50,6 +50,9 @@ export function Hero() {
         </p>
         <p className="mt-4 -rotate-3 rounded-full border-4 border-ink bg-[#fff1a8] px-5 py-1 font-display text-2xl shadow-[3px_4px_0_#161616]">
           Only {SUPPLY_LABEL} Mochis
+        </p>
+        <p className="mt-3 font-display text-xl text-white sm:text-2xl" style={{ textShadow: "2px 2px 0 #161616" }}>
+          {POWERED}
         </p>
         <div className="mt-7 flex flex-wrap justify-center gap-3">
           <a href="#join" className="btn btn-pink">

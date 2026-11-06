@@ -80,6 +80,19 @@ export const FEATURED: FeaturedMochi[] = [
 export const SUPPLY = 4444;
 export const SUPPLY_LABEL = SUPPLY.toLocaleString("en-US");
 
+export const TOKEN = "$MOCHI";
+export const POWERED = `Free mint, powered by ${TOKEN}`;
+
+// The collection at a glance, shown on the home page
+export const FACTS = [
+  { label: "Supply", value: SUPPLY_LABEL },
+  { label: "Mint price", value: "FREE" },
+  { label: "Chain", value: "Robinhood" },
+  { label: "Launchpad", value: "OpenSea" },
+  { label: "Ecosystem token", value: TOKEN },
+  { label: "Mint date", value: "TBA" },
+];
+
 // Votes a Mochi in the gallery needs to secure a free airdrop
 export const AIRDROP_VOTES = 100;
 

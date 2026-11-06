@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { burstFrom } from "@/lib/burst";
 import { AIRDROP_VOTES } from "@/lib/mochi";
@@ -66,9 +67,9 @@ function Card({ item, canVote, onVoted }: { item: Item; canVote: boolean; onVote
             Vote
           </button>
         ) : (
-          <a href="#join" className="btn py-1! text-base!">
+          <Link href="/#join" className="btn py-1! text-base!">
             Vote
-          </a>
+          </Link>
         )}
         {error && <p className="text-xs font-bold text-[#c2185b]">{error}</p>}
       </div>
@@ -78,7 +79,7 @@ function Card({ item, canVote, onVoted }: { item: Item; canVote: boolean; onVote
 
 export function Gallery() {
   const { entry } = useSession();
-  const { on, ready, galleryTick } = useWall();
+  const { on, ready } = useWall();
   const [sort, setSort] = useState<Sort>("top");
   const [items, setItems] = useState<Item[]>([]);
   const [total, setTotal] = useState(0);
@@ -105,7 +106,7 @@ export function Gallery() {
     return () => {
       live = false;
     };
-  }, [on, sort, galleryTick, handle]);
+  }, [on, sort, handle]);
 
   const loadMore = async () => {
     const next = page + 1;
@@ -123,9 +124,9 @@ export function Gallery() {
   return (
     <div className="mx-auto max-w-5xl px-4">
       <div className="text-center">
-        <h2 className="font-display text-6xl text-white" style={{ textShadow: "4px 4px 0 #161616" }}>
+        <h1 className="font-display text-6xl text-white" style={{ textShadow: "4px 4px 0 #161616" }}>
           The Gallery
-        </h2>
+        </h1>
         <p className="mx-auto mt-2 max-w-xl font-bold text-ink/80">
           Hang your Mochi on the wall and vote for your favourites. Reach {AIRDROP_VOTES} votes and you secure a free airdrop.
         </p>
@@ -164,9 +165,9 @@ export function Gallery() {
           ) : (
             <div className="chunk mt-4 p-6 text-center">
               <p className="font-display text-2xl">The wall is empty.</p>
-              <a href="#builder" className="btn btn-pink mt-3 text-lg!">
+              <Link href="/#builder" className="btn btn-pink mt-3 text-lg!">
                 Be the first
-              </a>
+              </Link>
             </div>
           )}
 

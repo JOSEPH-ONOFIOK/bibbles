@@ -13,9 +13,6 @@ export type Wall = {
 type WallValue = Wall & {
   ready: boolean;
   refresh: () => void;
-  // Goes up when someone adds to the gallery, so it reloads
-  galleryTick: number;
-  galleryChanged: () => void;
 };
 
 const Ctx = createContext<WallValue | null>(null);
@@ -31,7 +28,6 @@ export function WallProvider({ children }: { children: React.ReactNode }) {
   const handle = entry?.handle;
   const [wall, setWall] = useState<Wall>({ on: false, top: [], me: null });
   const [ready, setReady] = useState(false);
-  const [galleryTick, setTick] = useState(0);
 
   useEffect(rememberInvite, []);
 
@@ -48,7 +44,5 @@ export function WallProvider({ children }: { children: React.ReactNode }) {
   // Again whenever the visitor signs in or out
   useEffect(refresh, [refresh, handle]);
 
-  const galleryChanged = useCallback(() => setTick((n) => n + 1), []);
-
-  return <Ctx.Provider value={{ ...wall, ready, refresh, galleryTick, galleryChanged }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ ...wall, ready, refresh }}>{children}</Ctx.Provider>;
 }

@@ -1,14 +1,15 @@
 "use client";
 
-import { useRef } from "react";
+import Link from "next/link";
+import { useRef, useState } from "react";
 import { useSession } from "./Session";
 
 const LINKS = [
-  { href: "#join", label: "Join" },
-  { href: "#builder", label: "Builder" },
-  { href: "#gallery", label: "Gallery" },
-  { href: "#referrals", label: "Leaderboard" },
-  { href: "#stickers", label: "Stickers" },
+  { href: "/#join", label: "Join" },
+  { href: "/#builder", label: "Builder" },
+  { href: "/gallery", label: "Gallery" },
+  { href: "/leaderboard", label: "Leaderboard" },
+  { href: "/#stickers", label: "Stickers" },
 ];
 
 // The logo silhouette with eyes. It blinks whenever you hover a link.
@@ -34,6 +35,7 @@ function Mascot({ blinkRef }: { blinkRef: React.RefObject<SVGSVGElement | null> 
 export function Nav() {
   const mascot = useRef<SVGSVGElement>(null);
   const { entry } = useSession();
+  const [open, setOpen] = useState(false);
   const blink = () => {
     const el = mascot.current;
     if (!el) return;
@@ -43,33 +45,52 @@ export function Nav() {
   };
 
   return (
-    <header className="fixed inset-x-0 top-3 z-50 flex justify-center px-3">
+    <header className="fixed inset-x-0 top-3 z-50 flex flex-col items-center px-3">
       <nav className="chunk flex w-full max-w-5xl items-center gap-2 rounded-full! py-1.5 pr-2 pl-3 sm:gap-4">
-        <a href="#top" onMouseEnter={blink} className="flex items-center gap-2">
+        <Link href="/" onClick={() => setOpen(false)} onMouseEnter={blink} className="flex items-center gap-2">
           <Mascot blinkRef={mascot} />
           <span className="font-display text-2xl text-pink" style={{ textShadow: "2px 2px 0 #161616" }}>
             Mochi
           </span>
-        </a>
+        </Link>
         <div className="ml-auto hidden items-center gap-1 sm:flex">
           {LINKS.map((l) => (
-            <a
+            <Link
               key={l.href}
               href={l.href}
               onMouseEnter={blink}
-              className="rounded-full px-4 py-1.5 font-display text-lg transition hover:-rotate-2 hover:bg-pink hover:text-white"
+              className="rounded-full px-3 py-1.5 font-display text-lg transition hover:-rotate-2 hover:bg-pink hover:text-white"
             >
               {l.label}
-            </a>
+            </Link>
           ))}
         </div>
-        <a href="#join" onMouseEnter={blink} className="btn ml-auto bg-ink! py-1.5! text-base! text-white! sm:ml-0">
+        <button
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+          aria-label="Menu"
+          className="ml-auto grid h-10 w-10 shrink-0 place-items-center rounded-full border-4 border-ink bg-white sm:hidden"
+        >
+          <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden>
+            <path d={open ? "M6 6l12 12M18 6L6 18" : "M4 7h16M4 12h16M4 17h16"} fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" />
+          </svg>
+        </button>
+        <Link href="/#join" onClick={() => setOpen(false)} onMouseEnter={blink} className="btn min-w-0 bg-ink! py-1.5! text-base! text-white!">
           <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden>
             <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
           </svg>
-          {entry ? `@${entry.handle}` : "Connect X"}
-        </a>
+          <span className="max-w-[9rem] truncate">{entry ? `@${entry.handle}` : "Connect X"}</span>
+        </Link>
       </nav>
+      {open && (
+        <div className="chunk pop-in mt-2 flex w-full max-w-5xl flex-col p-2 sm:hidden">
+          {LINKS.map((l) => (
+            <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="rounded-2xl px-4 py-2 font-display text-xl active:bg-pink active:text-white">
+              {l.label}
+            </Link>
+          ))}
+        </div>
+      )}
     </header>
   );
 }

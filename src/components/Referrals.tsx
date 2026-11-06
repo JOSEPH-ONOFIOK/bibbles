@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { X_HANDLE } from "@/lib/mochi";
 import { SITE_URL } from "@/lib/site";
@@ -44,10 +45,10 @@ export function Referrals() {
   return (
     <div className="mx-auto max-w-3xl px-4">
       <div className="text-center">
-        <h2 className="font-display text-6xl text-white" style={{ textShadow: "4px 4px 0 #161616" }}>
+        <h1 className="font-display text-6xl text-white" style={{ textShadow: "4px 4px 0 #161616" }}>
           Top Recruiters
-        </h2>
-        <p className="mt-2 font-bold text-ink/80">Who has brought the most friends to the Mochis.</p>
+        </h1>
+        <p className="mt-2 font-bold text-white">Who has brought the most friends to the Mochis.</p>
       </div>
 
       <div className="chunk mt-8 p-5 sm:p-8">
@@ -74,9 +75,9 @@ export function Referrals() {
             ) : (
               <p className="rounded-2xl border-4 border-ink bg-[#fff1a8] px-4 py-3 text-center font-bold">
                 Add your wallet in the{" "}
-                <a href="#join" className="underline decoration-2 underline-offset-2">
+                <Link href="/#join" className="underline decoration-2 underline-offset-2">
                   Join tasks
-                </a>{" "}
+                </Link>{" "}
                 to get your invite link.
               </p>
             )}

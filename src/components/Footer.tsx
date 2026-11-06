@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BRAND_PINK, FEATURED, X_HANDLE, X_URL } from "@/lib/mochi";
 import { PeekMochi } from "./PeekMochi";
 
@@ -14,7 +15,11 @@ export function Footer() {
         <a href={X_URL} target="_blank" rel="noreferrer" className="btn mt-5">
           Follow {X_HANDLE}
         </a>
-        <p className="mt-6 text-xs font-bold text-white/80">© 2026 Mochi</p>
+        <nav className="mt-6 flex gap-5 font-display text-xl text-white" style={{ textShadow: "2px 2px 0 #161616" }}>
+          <Link href="/gallery" className="hover:underline">Gallery</Link>
+          <Link href="/leaderboard" className="hover:underline">Leaderboard</Link>
+        </nav>
+        <p className="mt-4 text-xs font-bold text-white/80">© 2026 Mochi</p>
       </div>
       <div className="mt-6 flex items-end justify-center gap-2 px-4">
         {[FEATURED[4], FEATURED[1], FEATURED[3]].map((b, i) => (

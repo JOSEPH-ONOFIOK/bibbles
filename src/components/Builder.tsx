@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState } from "react";
 import {
   AURAS,
@@ -43,7 +44,7 @@ const START: MochiLook = { skin: "blush", face: "sparkle", head: "halo", fit: "j
 // Puts the Mochi on the gallery wall. Shows what's missing until it can.
 function DisplayButton({ look, name, from }: { look: MochiLook; name: string; from: React.RefObject<HTMLDivElement | null> }) {
   const { entry } = useSession();
-  const { on, me, refresh, galleryChanged } = useWall();
+  const { on, me, refresh } = useWall();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   if (!on) return null;
@@ -61,7 +62,6 @@ function DisplayButton({ look, name, from }: { look: MochiLook; name: string; fr
     if (d.error) return setError(d.error);
     if (from.current) burstFrom(from.current, "hearts", 12);
     refresh();
-    galleryChanged();
   };
 
   return (
@@ -71,9 +71,9 @@ function DisplayButton({ look, name, from }: { look: MochiLook; name: string; fr
       </p>
       <div className="mt-2">
         {me?.displayed ? (
-          <a href="#gallery" className="btn px-4! py-1.5! text-base!">
+          <Link href="/gallery" className="btn px-4! py-1.5! text-base!">
             See it in the gallery
-          </a>
+          </Link>
         ) : !entry ? (
           <a href="#join" className="btn px-4! py-1.5! text-base!">
             Connect X first

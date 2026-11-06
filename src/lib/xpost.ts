@@ -52,11 +52,18 @@ const tagsAFriend = (text: string, handle: string) => {
   return [...text.matchAll(/@(\w{1,15})/g)].some((t) => !skip.has(t[1].toLowerCase()));
 };
 
-// A reply directly under the pinned post that tags at least one friend
+const tagsUs = (text: string) => new RegExp(`@(${US.join("|")})\\b`, "i").test(text);
+
+// A reply directly under the pinned post that tags at least one friend.
+// With no pinned post yet, any post of theirs tagging us and a friend counts.
 export async function verifyTagReply(link: string, handle: string, pinnedId: string): Promise<Result> {
   const r = await load(link, handle);
   if ("ok" in r) return r;
-  if (r.post.replyTo !== pinnedId) return { ok: false, error: "That isn't a reply to our pinned post. Reply directly under it." };
+  if (pinnedId) {
+    if (r.post.replyTo !== pinnedId) return { ok: false, error: "That isn't a reply to our pinned post. Reply directly under it." };
+  } else if (!tagsUs(r.post.text)) {
+    return { ok: false, error: `Your post needs to tag ${X_HANDLE}.` };
+  }
   if (!tagsAFriend(r.post.text, handle)) return { ok: false, error: "Tag at least one friend in your reply." };
   return { ok: true, link: `https://x.com/${r.post.author}/status/${r.id}` };
 }
@@ -66,7 +73,7 @@ export async function verifyMochiPost(link: string, handle: string, wallet: stri
   const r = await load(link, handle);
   if ("ok" in r) return r;
   const text = r.post.text.toLowerCase();
-  if (!new RegExp(`@(${US.join("|")})\\b`).test(text)) return { ok: false, error: `Your post needs to tag ${X_HANDLE}.` };
+  if (!tagsUs(text)) return { ok: false, error: `Your post needs to tag ${X_HANDLE}.` };
   if (!text.includes(wallet.toLowerCase())) return { ok: false, error: "Your post needs to include the wallet you entered in step 4." };
   if (!r.post.hasImage) return { ok: false, error: "Attach your Mochi image to the post." };
   return { ok: true, link: `https://x.com/${r.post.author}/status/${r.id}` };

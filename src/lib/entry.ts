@@ -63,6 +63,7 @@ export function toPublic(e: Entry): PublicEntry {
 export const WALLET = /^0x[0-9a-fA-F]{40}$/;
 export const HANDLE = /^\w{1,15}$/;
 
-// The pinned post people like, repost and reply to. Any x.com or twitter.com status link.
-export const PINNED_POST = process.env.NEXT_PUBLIC_PINNED_POST ?? "";
+// The pinned post people like, repost and reply to. Hardcoded to the profile until the post is up:
+// replace it with the post's status link and steps 2 and 3 switch to that post on their own.
+export const PINNED_POST = "https://x.com/themochieffect";
 export const PINNED_ID = /\/status(?:es)?\/(\d+)/.exec(PINNED_POST)?.[1] ?? "";

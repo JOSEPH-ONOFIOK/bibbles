@@ -34,7 +34,6 @@ async function complete(req: Request) {
       break;
 
     case "engage": {
-      if (!PINNED_ID) return bad("The pinned post isn't set yet.", 503);
       if (body.action === "like") entry.liked = true;
       else if (body.action === "repost") entry.reposted = true;
       else return bad("Unknown action.");
@@ -43,7 +42,6 @@ async function complete(req: Request) {
     }
 
     case "tag": {
-      if (!PINNED_ID) return bad("The pinned post isn't set yet.", 503);
       const r = await verifyTagReply(String(body.link ?? ""), entry.handle, PINNED_ID);
       if (!r.ok) return bad(r.error);
       entry.tagLink = r.link;

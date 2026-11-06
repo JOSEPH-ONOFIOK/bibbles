@@ -258,11 +258,10 @@ export function Join() {
               </Step>
 
               <Step n={2} title="Like and repost the pinned post" done={done("engage")}>
-                {PINNED_ID ? (
-                  <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2">
                     <button
                       onClick={() => {
-                        openX(intent("like", { tweet_id: PINNED_ID }));
+                        openX(PINNED_ID ? intent("like", { tweet_id: PINNED_ID }) : PINNED_POST);
                         task({ task: "engage", action: "like" });
                       }}
                       className={`btn px-4! py-2! text-base! ${entry.liked ? "bg-[#ffc6d6]!" : ""}`}
@@ -271,7 +270,7 @@ export function Join() {
                     </button>
                     <button
                       onClick={() => {
-                        openX(intent("retweet", { tweet_id: PINNED_ID }));
+                        openX(PINNED_ID ? intent("retweet", { tweet_id: PINNED_ID }) : PINNED_POST);
                         task({ task: "engage", action: "repost" });
                       }}
                       className={`btn px-4! py-2! text-base! ${entry.reposted ? "bg-[#ccffb2]!" : ""}`}
@@ -282,31 +281,37 @@ export function Join() {
                       View post
                     </a>
                   </div>
-                ) : (
-                  <p className="text-sm font-bold text-ink/60">The pinned post goes up soon.</p>
-                )}
               </Step>
 
               <Step n={3} title="Tag a friend" done={done("tag")}>
-                {PINNED_ID ? (
-                  done("tag") ? (
-                    <a href={entry.tagLink} target="_blank" rel="noreferrer" className="text-sm font-bold underline">
-                      See your reply
-                    </a>
-                  ) : (
-                    <>
-                      <p className="text-sm font-semibold text-ink/70">Reply under the pinned post and tag at least one friend, then paste your reply&apos;s link.</p>
-                      <button
-                        onClick={() => openX(intent("post", { in_reply_to: PINNED_ID, text: "Getting my Mochi 🩷 come with me " }))}
-                        className="btn mt-3 px-4! py-2! text-base!"
-                      >
-                        <XLogo /> Reply on X
-                      </button>
-                      <LinkProof task="tag" placeholder="https://x.com/you/status/…" />
-                    </>
-                  )
+                {done("tag") ? (
+                  <a href={entry.tagLink} target="_blank" rel="noreferrer" className="text-sm font-bold underline">
+                    See your post
+                  </a>
                 ) : (
-                  <p className="text-sm font-bold text-ink/60">The pinned post goes up soon.</p>
+                  <>
+                    <p className="text-sm font-semibold text-ink/70">
+                      {PINNED_ID
+                        ? "Reply under the pinned post and tag at least one friend, then paste your reply's link."
+                        : `Post on X tagging ${X_HANDLE} and at least one friend, then paste your post's link.`}
+                    </p>
+                    <button
+                      onClick={() =>
+                        openX(
+                          intent(
+                            "post",
+                            PINNED_ID
+                              ? { in_reply_to: PINNED_ID, text: "Getting my Mochi 🩷 come with me " }
+                              : { text: `Getting my Mochi 🩷 with ${X_HANDLE} come with me ` },
+                          ),
+                        )
+                      }
+                      className="btn mt-3 px-4! py-2! text-base!"
+                    >
+                      <XLogo /> {PINNED_ID ? "Reply on X" : "Post on X"}
+                    </button>
+                    <LinkProof task="tag" placeholder="https://x.com/you/status/…" />
+                  </>
                 )}
               </Step>
 

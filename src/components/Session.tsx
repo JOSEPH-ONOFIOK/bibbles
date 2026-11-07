@@ -16,6 +16,7 @@ type SessionValue = {
   disconnect: () => Promise<void>;
   task: (body: Record<string, unknown>) => Promise<Result>;
   mochilist: (body: Record<string, unknown>) => Promise<Result>;
+  airdrop: (body: Record<string, unknown>) => Promise<Result>;
 };
 
 const Ctx = createContext<SessionValue | null>(null);
@@ -104,7 +105,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     return { error: d.error };
   }, []);
 
+  const airdrop = useCallback(async (body: Record<string, unknown>) => {
+    const d = await post("/api/airdrop", body);
+    if (d.entry) setEntry(d.entry);
+    return { error: d.error };
+  }, []);
+
   return (
-    <Ctx.Provider value={{ ready, auth, entry, notice, connect, devConnect, disconnect, task, mochilist }}>{children}</Ctx.Provider>
+    <Ctx.Provider value={{ ready, auth, entry, notice, connect, devConnect, disconnect, task, mochilist, airdrop }}>{children}</Ctx.Provider>
   );
 }

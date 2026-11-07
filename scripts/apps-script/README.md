@@ -79,6 +79,8 @@ A new deployment gets a new URL. To keep the existing one:
 | MochiList Wallet, MochiList Collection | The holder wallet they checked and the collection found in it |
 | MochiList Comment | Link to their verified comment on the announcement |
 | MochiList At | When the spot was confirmed |
+| $MOCHI Airdrop Wallet, $MOCHI Airdrop At | The wallet and time of a complete /mochiclaim application |
+| $MOCHI Airdrop QRT, $MOCHI Airdrop Invited By | Their verified quote post, and who invited them |
 
 Sorting or filtering the tab is safe: handles are found by name, never by row
 position. Filled-in cells are kept: someone who clears their browser and starts

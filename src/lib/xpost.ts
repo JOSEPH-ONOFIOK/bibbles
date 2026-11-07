@@ -7,7 +7,7 @@ import { X_HANDLE } from "./mochi";
 const US = [X_HANDLE.replace("@", "").toLowerCase(), "mochimochirh"];
 const POST_LINK = /(?:https?:\/\/)?(?:www\.|mobile\.)?(?:x|twitter)\.com\/(\w{1,15})\/status(?:es)?\/(\d+)/i;
 
-type PublicPost = { author: string; text: string; replyTo?: string; hasImage: boolean };
+type PublicPost = { author: string; text: string; replyTo?: string; quoted?: string; urls: string[]; hasImage: boolean };
 type Result = { ok: true; link: string } | { ok: false; error: string };
 
 // The embed endpoint expects a token derived from the post id
@@ -26,6 +26,9 @@ async function fetchPost(id: string): Promise<PublicPost | null> {
     author: String(j.user.screen_name),
     text: j.text,
     replyTo: j.in_reply_to_status_id_str ?? undefined,
+    quoted: j.quoted_tweet?.id_str ?? undefined,
+    // Links in the text show as t.co; these are where they really go
+    urls: (j.entities?.urls ?? []).map((u: { expanded_url?: string }) => String(u.expanded_url ?? "")),
     hasImage: media.length > 0,
   };
 }
@@ -90,5 +93,20 @@ export async function verifyClaimComment(link: string, handle: string, announcem
     return { ok: false, error: `Your comment needs to tag ${X_HANDLE}.` };
   }
   if (!/claim/i.test(r.post.text)) return { ok: false, error: "Your comment needs to say you claimed your MochiList spot." };
+  return { ok: true, link: `https://x.com/${r.post.author}/status/${r.id}` };
+}
+
+// $MOCHI airdrop: a quote of the airdrop post (or, with no post yet, a post tagging us)
+// that includes their own invite link
+export async function verifyAirdropQrt(link: string, handle: string, postId: string): Promise<Result> {
+  const r = await load(link, handle);
+  if ("ok" in r) return r;
+  if (postId) {
+    if (r.post.quoted !== postId) return { ok: false, error: "That isn't a quote of our airdrop post. Use the Quote button on it." };
+  } else if (!tagsUs(r.post.text)) {
+    return { ok: false, error: `Your post needs to tag ${X_HANDLE}.` };
+  }
+  const mine = new RegExp(`mochiclaim\\?ref=${handle}\\b`, "i");
+  if (![r.post.text, ...r.post.urls].some((t) => mine.test(t))) return { ok: false, error: "Your post needs your own invite link (shown above)." };
   return { ok: true, link: `https://x.com/${r.post.author}/status/${r.id}` };
 }

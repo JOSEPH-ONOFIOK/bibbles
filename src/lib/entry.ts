@@ -1,5 +1,6 @@
 // One sign-up and its tasks. Shared by the API routes and the UI.
 
+import type { Airdrop } from "./airdrop";
 import type { MochiList } from "./mochilist";
 
 export type TaskId = "follow" | "engage" | "tag" | "wallet" | "mochi";
@@ -23,6 +24,8 @@ export type Entry = {
   ip?: string;
   // MochiList claim for partner collection holders, separate from the tasks above
   ml?: MochiList;
+  // $MOCHI airdrop application (/mochiclaim)
+  ad?: Airdrop;
 };
 
 export const TASK_ORDER: TaskId[] = ["follow", "engage", "tag", "wallet", "mochi"];
@@ -57,6 +60,11 @@ export function signupRow(e: Entry, stats: RowStats = {}) {
     mochilist_collection: e.ml?.claimedAt ? (e.ml.collection ?? "") : "",
     mochilist_comment: e.ml?.commentLink ?? "",
     mochilist_at: iso(e.ml?.claimedAt),
+    // Only once the application is complete
+    mochi_airdrop_wallet: e.ad?.appliedAt ? (e.ad.wallet ?? "") : "",
+    mochi_airdrop_qrt: e.ad?.qrtLink ?? "",
+    mochi_airdrop_invited_by: e.ad?.appliedAt ? (e.ad.invitedBy ?? "") : "",
+    mochi_airdrop_at: iso(e.ad?.appliedAt),
   };
 }
 export type SignupRow = ReturnType<typeof signupRow>;

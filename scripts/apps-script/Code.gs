@@ -17,7 +17,7 @@
  */
 
 /** Bumped whenever this file changes, so `?version` shows which copy is deployed. */
-var SCRIPT_VERSION = 5;
+var SCRIPT_VERSION = 6;
 
 var SIGNUPS = 'Signups';
 
@@ -42,6 +42,10 @@ var HEADERS = [
   'MochiList Collection',
   'MochiList Comment',
   'MochiList At',
+  '$MOCHI Airdrop Wallet',
+  '$MOCHI Airdrop QRT',
+  '$MOCHI Airdrop Invited By',
+  '$MOCHI Airdrop At',
 ];
 
 /** Which field of a row from the site fills each column. */
@@ -65,6 +69,10 @@ var FIELDS = {
   'MochiList Collection': 'mochilist_collection',
   'MochiList Comment': 'mochilist_comment',
   'MochiList At': 'mochilist_at',
+  '$MOCHI Airdrop Wallet': 'mochi_airdrop_wallet',
+  '$MOCHI Airdrop QRT': 'mochi_airdrop_qrt',
+  '$MOCHI Airdrop Invited By': 'mochi_airdrop_invited_by',
+  '$MOCHI Airdrop At': 'mochi_airdrop_at',
 };
 
 // --- entry points ---------------------------------------------------------

@@ -7,5 +7,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/gallery`, changeFrequency: "daily", priority: 0.8 },
     { url: `${SITE_URL}/leaderboard`, changeFrequency: "daily", priority: 0.8 },
     { url: `${SITE_URL}/mochilist`, changeFrequency: "daily", priority: 0.8 },
+    { url: `${SITE_URL}/mochiclaim`, changeFrequency: "daily", priority: 0.8 },
   ];
 }

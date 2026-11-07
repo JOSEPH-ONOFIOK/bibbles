@@ -28,8 +28,8 @@ export const COLLECTIONS: Collection[] = [
 export const ANNOUNCEMENT = "https://x.com/themochieffect";
 export const ANNOUNCEMENT_ID = /\/status(?:es)?\/(\d+)/.exec(ANNOUNCEMENT)?.[1] ?? "";
 
-export const COMMENT_TEXT = "Just claimed my MochiList spot 🩷";
-export const claimPostText = (collection: string) =>
+// Filled in for their comment on the announcement
+export const claimText = (collection: string) =>
   `Just claimed my MochiList spot through ${collection}.\n\nSee you at mint, ${X_HANDLE} 👀 $MOCHI`;
 
 export type MochiList = {
@@ -39,8 +39,7 @@ export type MochiList = {
   liked?: boolean;
   reposted?: boolean;
   commentLink?: string;
-  postLink?: string;
   claimedAt?: number;
 };
 
-export const mlTasksDone = (m?: MochiList) => !!(m?.collection && m.liked && m.reposted && m.commentLink && m.postLink);
+export const mlTasksDone = (m?: MochiList) => !!(m?.collection && m.liked && m.reposted && m.commentLink);

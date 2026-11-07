@@ -3,13 +3,12 @@ import { WALLET, toPublic } from "@/lib/entry";
 import { checkHoldings, mlClaimWallet, mlConfirm, mlWalletOwner } from "@/lib/holdings";
 import { ANNOUNCEMENT_ID, mlTasksDone } from "@/lib/mochilist";
 import { store } from "@/lib/store";
-import { verifyClaimComment, verifyClaimPost } from "@/lib/xpost";
+import { verifyClaimComment } from "@/lib/xpost";
 
 // POST { step, ... } moves the signed-in account through the MochiList claim.
 //   wallet   { wallet }                 checks it holds an NFT from an eligible collection
 //   engage   { action: like|repost }    clicked like or repost on the announcement
 //   comment  { link }                   comment on the announcement saying they claimed (verified)
-//   post     { link }                   post tagging us with $MOCHI (verified)
 //   claim                               retry the final check, if a chain was down
 // Once every step is done, the wallet is checked again and the spot is confirmed.
 export async function POST(req: Request) {
@@ -62,14 +61,6 @@ async function run(req: Request) {
       const r = await verifyClaimComment(String(body.link ?? ""), entry.handle, ANNOUNCEMENT_ID);
       if (!r.ok) return bad(r.error);
       ml.commentLink = r.link;
-      break;
-    }
-
-    case "post": {
-      if (!ml.collection) return bad("Check your wallet first.");
-      const r = await verifyClaimPost(String(body.link ?? ""), entry.handle, ml.commentLink);
-      if (!r.ok) return bad(r.error);
-      ml.postLink = r.link;
       break;
     }
 

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { burstFrom } from "@/lib/burst";
 import { WALLET } from "@/lib/entry";
 import { POWERED, X_HANDLE } from "@/lib/mochi";
-import { ANNOUNCEMENT, ANNOUNCEMENT_ID, COMMENT_TEXT, claimPostText, mlTasksDone } from "@/lib/mochilist";
+import { ANNOUNCEMENT, ANNOUNCEMENT_ID, claimText, mlTasksDone } from "@/lib/mochilist";
 import { CollectionSpiral } from "./CollectionSpiral";
 import { DevConnect, Step, XLogo, intent, openX } from "./Join";
 import { useSession } from "./Session";
@@ -14,7 +14,7 @@ const INPUT =
   "min-w-0 flex-1 rounded-2xl border-4 border-ink bg-white px-3 py-2 text-sm outline-none focus:shadow-[3px_3px_0_#cf4f9c] disabled:opacity-50";
 
 // Link input + verify button for the comment and the post
-function LinkProof({ step }: { step: "comment" | "post" }) {
+function LinkProof({ step }: { step: "comment" }) {
   const { mochilist } = useSession();
   const [link, setLink] = useState("");
   const [busy, setBusy] = useState(false);
@@ -98,13 +98,9 @@ export function MochiList() {
     setClaimError(r.error ?? null);
   };
 
+  const commentText = ml?.collection ? claimText(ml.collection) : "";
   const comment = () =>
-    openX(
-      intent(
-        "post",
-        ANNOUNCEMENT_ID ? { in_reply_to: ANNOUNCEMENT_ID, text: COMMENT_TEXT } : { text: `${COMMENT_TEXT} ${X_HANDLE}` },
-      ),
-    );
+    openX(intent("post", ANNOUNCEMENT_ID ? { in_reply_to: ANNOUNCEMENT_ID, text: commentText } : { text: commentText }));
 
   return (
     <div className="mx-auto max-w-6xl px-4">
@@ -232,30 +228,13 @@ export function MochiList() {
                             ? "Comment on the announcement saying you claimed your spot, then paste your comment's link."
                             : `Post on X tagging ${X_HANDLE} saying you claimed your spot, then paste the link.`}
                         </p>
-                        <button onClick={comment} className="btn mt-3 px-4! py-2! text-base!">
+                        <p className="mt-3 whitespace-pre-line rounded-2xl border-4 border-dashed border-ink/30 bg-[#fffdf5] px-3 py-2 text-sm font-semibold">
+                          {commentText}
+                        </p>
+                        <button onClick={comment} className="btn btn-pink mt-3 px-4! py-2! text-base!">
                           <XLogo /> {ANNOUNCEMENT_ID ? "Comment on X" : "Post on X"}
                         </button>
                         <LinkProof step="comment" />
-                      </>
-                    )}
-                  </Step>
-
-                  <Step n={4} title={`Post with ${X_HANDLE} and $MOCHI`} done={!!ml?.postLink}>
-                    {!eligible ? (
-                      <Locked />
-                    ) : ml?.postLink ? (
-                      <a href={ml.postLink} target="_blank" rel="noreferrer" className="text-sm font-bold underline">
-                        See your post
-                      </a>
-                    ) : (
-                      <>
-                        <p className="whitespace-pre-line rounded-2xl border-4 border-dashed border-ink/30 bg-[#fffdf5] px-3 py-2 text-sm font-semibold">
-                          {claimPostText(ml!.collection!)}
-                        </p>
-                        <button onClick={() => openX(intent("post", { text: claimPostText(ml!.collection!) }))} className="btn btn-pink mt-3 px-4! py-2! text-base!">
-                          <XLogo /> Post on X
-                        </button>
-                        <LinkProof step="post" />
                       </>
                     )}
                   </Step>

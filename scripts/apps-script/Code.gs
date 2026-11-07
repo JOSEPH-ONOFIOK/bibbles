@@ -17,7 +17,7 @@
  */
 
 /** Bumped whenever this file changes, so `?version` shows which copy is deployed. */
-var SCRIPT_VERSION = 4;
+var SCRIPT_VERSION = 5;
 
 var SIGNUPS = 'Signups';
 
@@ -41,7 +41,6 @@ var HEADERS = [
   'MochiList Wallet',
   'MochiList Collection',
   'MochiList Comment',
-  'MochiList Post',
   'MochiList At',
 ];
 
@@ -65,7 +64,6 @@ var FIELDS = {
   'MochiList Wallet': 'mochilist_wallet',
   'MochiList Collection': 'mochilist_collection',
   'MochiList Comment': 'mochilist_comment',
-  'MochiList Post': 'mochilist_post',
   'MochiList At': 'mochilist_at',
 };
 

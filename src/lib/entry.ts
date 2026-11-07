@@ -55,7 +55,6 @@ export function signupRow(e: Entry, stats: RowStats = {}) {
     mochilist_wallet: e.ml?.wallet ?? "",
     mochilist_collection: e.ml?.collection ?? "",
     mochilist_comment: e.ml?.commentLink ?? "",
-    mochilist_post: e.ml?.postLink ?? "",
     mochilist_at: iso(e.ml?.claimedAt),
   };
 }

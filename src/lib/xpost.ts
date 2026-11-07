@@ -79,8 +79,6 @@ export async function verifyMochiPost(link: string, handle: string, wallet: stri
   return { ok: true, link: `https://x.com/${r.post.author}/status/${r.id}` };
 }
 
-const statusId = (link: string) => POST_LINK.exec(link.trim())?.[2];
-
 // MochiList: a comment under the announcement saying they claimed their spot.
 // With no announcement post yet, any post of theirs tagging us counts.
 export async function verifyClaimComment(link: string, handle: string, announcementId: string): Promise<Result> {
@@ -92,16 +90,5 @@ export async function verifyClaimComment(link: string, handle: string, announcem
     return { ok: false, error: `Your comment needs to tag ${X_HANDLE}.` };
   }
   if (!/claim/i.test(r.post.text)) return { ok: false, error: "Your comment needs to say you claimed your MochiList spot." };
-  return { ok: true, link: `https://x.com/${r.post.author}/status/${r.id}` };
-}
-
-// MochiList: a post of its own (not a reply) tagging us and including $MOCHI
-export async function verifyClaimPost(link: string, handle: string, commentLink?: string): Promise<Result> {
-  if (commentLink && statusId(link) === statusId(commentLink)) return { ok: false, error: "That's your comment. Paste the link to your separate post." };
-  const r = await load(link, handle);
-  if ("ok" in r) return r;
-  if (r.post.replyTo) return { ok: false, error: "That's a reply. Publish it as a post of its own." };
-  if (!tagsUs(r.post.text)) return { ok: false, error: `Your post needs to tag ${X_HANDLE}.` };
-  if (!/\$mochi\b/i.test(r.post.text)) return { ok: false, error: "Your post needs to include $MOCHI." };
   return { ok: true, link: `https://x.com/${r.post.author}/status/${r.id}` };
 }

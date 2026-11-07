@@ -19,7 +19,7 @@ export const COLLECTIONS: Collection[] = [
   { name: "Soul Club", chain: "robinhood", contract: "0xd6889961584a42dc5d8196bd82a4c6d0f2b684c5", logo: "/collections/soul-club.jpg" }, // Digital humans by Souls.club
   { name: "Argonauts", chain: "ethereum", contract: "0x387c41b0b2f1128de44db1bcf8baad085f26392c", logo: "/collections/argonauts.jpg" },
   { name: "Vaultlings", chain: "robinhood", contract: "0x23708e501cbeaa92f45183197c673fdabf993484", logo: "/collections/vaultlings.jpg" },
-  { name: "CannaCatMeme", chain: "robinhood", contract: "0x53a034d5bdd6fbfed20c07e65fb47548e336e558", logo: "/collections/cannacat.jpg" },
+  { name: "CannaCats", chain: "robinhood", contract: "0x53716c211179a342e37734f4fb46b276c975359a", logo: "/collections/cannacat.jpg" }, // CannaCats V2, @CannaCatMeme
   { name: "Rekt TRADOOR", chain: "robinhood", contract: "0x7b3ecfa33657de415ff269dc97dfa82954cee706", logo: "/collections/rekt-tradooor.jpg" },
 ];
 

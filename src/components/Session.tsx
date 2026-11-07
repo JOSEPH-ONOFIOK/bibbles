@@ -11,10 +11,11 @@ type SessionValue = {
   auth: Auth;
   entry: PublicEntry | null;
   notice: string | null;
-  connect: () => void;
+  connect: (back?: string) => void;
   devConnect: (handle: string) => Promise<Result>;
   disconnect: () => Promise<void>;
   task: (body: Record<string, unknown>) => Promise<Result>;
+  mochilist: (body: Record<string, unknown>) => Promise<Result>;
 };
 
 const Ctx = createContext<SessionValue | null>(null);
@@ -74,10 +75,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       });
   }, []);
 
-  const connect = useCallback(() => {
+  // back: a page to return to after X, such as /mochilist
+  const connect = useCallback((back?: string) => {
     // Full page navigation: the route redirects to X's consent screen
-    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-    location.href = "/api/auth/x/start";
+    location.href = back ? `/api/auth/x/start?to=${encodeURIComponent(back)}` : "/api/auth/x/start";
   }, []);
 
   const devConnect = useCallback(async (handle: string) => {
@@ -97,7 +98,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     return { error: d.error };
   }, []);
 
+  const mochilist = useCallback(async (body: Record<string, unknown>) => {
+    const d = await post("/api/mochilist", body);
+    if (d.entry) setEntry(d.entry);
+    return { error: d.error };
+  }, []);
+
   return (
-    <Ctx.Provider value={{ ready, auth, entry, notice, connect, devConnect, disconnect, task }}>{children}</Ctx.Provider>
+    <Ctx.Provider value={{ ready, auth, entry, notice, connect, devConnect, disconnect, task, mochilist }}>{children}</Ctx.Provider>
   );
 }

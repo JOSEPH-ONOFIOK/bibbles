@@ -11,10 +11,10 @@ import { useWall } from "./WallContext";
 
 const US = X_HANDLE.replace("@", "");
 
-const openX = (url: string) => window.open(url, "_blank", "noopener,noreferrer");
-const intent = (path: string, params: Record<string, string>) => `https://x.com/intent/${path}?${new URLSearchParams(params)}`;
+export const openX = (url: string) => window.open(url, "_blank", "noopener,noreferrer");
+export const intent = (path: string, params: Record<string, string>) => `https://x.com/intent/${path}?${new URLSearchParams(params)}`;
 
-function XLogo({ className = "h-4 w-4" }: { className?: string }) {
+export function XLogo({ className = "h-4 w-4" }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={`${className} fill-current`} aria-hidden>
       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -31,7 +31,7 @@ function Check() {
 }
 
 // One numbered task card
-function Step({
+export function Step({
   n,
   title,
   done,
@@ -114,7 +114,7 @@ function LinkProof({
   );
 }
 
-function DevConnect() {
+export function DevConnect() {
   const { devConnect } = useSession();
   const [handle, setHandle] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -225,7 +225,7 @@ export function Join() {
               <p className="font-display text-2xl">Sign ups open soon. Follow {X_HANDLE} to hear first.</p>
             ) : (
               <>
-                <button onClick={connect} disabled={auth !== "x"} className="btn bg-ink! px-7! text-white! text-2xl!">
+                <button onClick={() => connect()} disabled={auth !== "x"} className="btn bg-ink! px-7! text-white! text-2xl!">
                   <XLogo className="h-5 w-5" /> Connect X
                 </button>
                 <p className="mt-3 text-sm font-semibold text-ink/60">We only read your public handle. We never post for you.</p>

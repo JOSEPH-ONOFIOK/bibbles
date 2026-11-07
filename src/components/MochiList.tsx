@@ -1,0 +1,278 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { burstFrom } from "@/lib/burst";
+import { WALLET } from "@/lib/entry";
+import { POWERED, X_HANDLE } from "@/lib/mochi";
+import { ANNOUNCEMENT, ANNOUNCEMENT_ID, COLLECTIONS, COMMENT_TEXT, claimPostText, mlTasksDone } from "@/lib/mochilist";
+import { DevConnect, Step, XLogo, intent, openX } from "./Join";
+import { useSession } from "./Session";
+
+const ERROR = "mt-2 text-sm font-bold text-[#c2185b]";
+const INPUT =
+  "min-w-0 flex-1 rounded-2xl border-4 border-ink bg-white px-3 py-2 text-sm outline-none focus:shadow-[3px_3px_0_#cf4f9c] disabled:opacity-50";
+
+// Link input + verify button for the comment and the post
+function LinkProof({ step }: { step: "comment" | "post" }) {
+  const { mochilist } = useSession();
+  const [link, setLink] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  return (
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
+        setBusy(true);
+        setError(null);
+        const r = await mochilist({ step, link });
+        setBusy(false);
+        if (r.error) setError(r.error);
+      }}
+      className="mt-3"
+    >
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://x.com/you/status/…" spellCheck={false} className={INPUT} />
+        <button type="submit" disabled={busy || !link.trim()} className="btn btn-pink px-4! py-2! text-base!">
+          {busy ? "Checking…" : "Verify"}
+        </button>
+      </div>
+      {error && <p className={ERROR}>{error}</p>}
+    </form>
+  );
+}
+
+function Locked() {
+  return <p className="text-sm font-bold text-ink/50">Check your wallet in step 1 first.</p>;
+}
+
+export function MochiList() {
+  const { ready, auth, entry, notice, connect, disconnect, mochilist } = useSession();
+  const ml = entry?.ml;
+  const eligible = !!ml?.collection;
+  const claimed = !!ml?.claimedAt;
+  const tasksDone = mlTasksDone(ml);
+
+  // null until they type, so the saved wallet shows by default
+  const [draft, setDraft] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [walletError, setWalletError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [claimError, setClaimError] = useState<string | null>(null);
+  const banner = useRef<HTMLDivElement>(null);
+  const wallet = draft ?? ml?.wallet ?? "";
+
+  const was = useRef(claimed);
+  useEffect(() => {
+    if (claimed && !was.current && banner.current) burstFrom(banner.current, "hearts", 16);
+    was.current = claimed;
+  }, [claimed]);
+
+  const checkWallet = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!WALLET.test(wallet.trim())) {
+      setWalletError("That isn't a valid EVM address. It starts with 0x followed by 40 characters.");
+      return;
+    }
+    setChecking(true);
+    setWalletError(null);
+    const r = await mochilist({ step: "wallet", wallet: wallet.trim() });
+    setChecking(false);
+    if (r.error) setWalletError(r.error);
+    else setDraft(null);
+  };
+
+  const confirm = async () => {
+    setConfirming(true);
+    const r = await mochilist({ step: "claim" });
+    setConfirming(false);
+    setClaimError(r.error ?? null);
+  };
+
+  const comment = () =>
+    openX(
+      intent(
+        "post",
+        ANNOUNCEMENT_ID ? { in_reply_to: ANNOUNCEMENT_ID, text: COMMENT_TEXT } : { text: `${COMMENT_TEXT} ${X_HANDLE}` },
+      ),
+    );
+
+  return (
+    <div className="mx-auto max-w-3xl px-4">
+      <div className="text-center">
+        <h1 className="font-display text-6xl text-white" style={{ textShadow: "4px 4px 0 #161616" }}>
+          MochiList
+        </h1>
+        <p className="mt-2 font-bold text-ink/80">
+          Hold an NFT from one of these collections? Claim your MochiList spot. {POWERED}.
+        </p>
+        <ul className="mt-4 flex flex-wrap justify-center gap-2">
+          {COLLECTIONS.map((c) => (
+            <li
+              key={c.name}
+              className={`rounded-full border-[3px] border-ink px-3 py-0.5 font-display text-base ${
+                ml?.collection === c.name ? "bg-[#ccffb2]" : "bg-white"
+              }`}
+            >
+              {c.name}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="chunk mt-8 p-5 sm:p-8">
+        {notice && <p className="pop-in mb-5 rounded-2xl border-4 border-ink bg-[#fff1a8] px-4 py-2 text-center font-bold">{notice}</p>}
+
+        {!ready ? (
+          <p className="text-center font-display text-2xl text-ink/50">Loading…</p>
+        ) : !entry ? (
+          <div className="text-center">
+            {auth === "off" ? (
+              <p className="font-display text-2xl">Claims open soon. Follow {X_HANDLE} to hear first.</p>
+            ) : (
+              <>
+                <button onClick={() => connect("/mochilist")} disabled={auth !== "x"} className="btn bg-ink! px-7! text-2xl! text-white!">
+                  <XLogo className="h-5 w-5" /> Connect X
+                </button>
+                <p className="mt-3 text-sm font-semibold text-ink/60">We check your comment and post come from your account. We never post for you.</p>
+                {auth === "dev" && <DevConnect />}
+              </>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border-4 border-ink bg-[#e2d4ff] px-4 py-2">
+              <p className="font-bold">
+                Connected as <span className="font-display text-xl">@{entry.handle}</span>
+              </p>
+              <button onClick={disconnect} className="text-sm font-bold underline decoration-2 underline-offset-2">
+                Disconnect
+              </button>
+            </div>
+
+            {claimed ? (
+              <div ref={banner} className="pop-in mt-6 rounded-3xl border-4 border-ink bg-[#ccffb2] p-5 text-center">
+                <p className="font-display text-4xl">You&apos;re on the MochiList 🩷</p>
+                <p className="mt-2 font-bold">
+                  Claimed through {ml?.collection}. Your spot is saved to{" "}
+                  <span className="font-mono text-sm break-all">{ml?.wallet}</span>.
+                </p>
+                <p className="mt-2 text-sm font-semibold text-ink/70">See you at mint. Keep an eye on {X_HANDLE} for the date.</p>
+              </div>
+            ) : (
+              <div className="mt-6 space-y-4">
+                <Step n={1} title="Check your wallet" done={eligible}>
+                  <form onSubmit={checkWallet}>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <input
+                        value={wallet}
+                        onChange={(e) => setDraft(e.target.value)}
+                        placeholder="0x…"
+                        spellCheck={false}
+                        autoComplete="off"
+                        className={`${INPUT} font-mono`}
+                      />
+                      <button type="submit" disabled={checking || !wallet.trim() || wallet.trim() === ml?.wallet} className="btn btn-pink px-4! py-2! text-base!">
+                        {checking ? "Checking…" : eligible ? "Change" : "Check"}
+                      </button>
+                    </div>
+                    {walletError && <p className={ERROR}>{walletError}</p>}
+                  </form>
+                  {eligible ? (
+                    <p className="mt-2 text-sm font-extrabold">Eligible: this wallet holds {ml?.collection}.</p>
+                  ) : (
+                    <p className="mt-2 text-sm font-semibold text-ink/60">
+                      Paste the wallet that holds your NFT. No signing, no payment, no approvals: we only look up what it holds.
+                    </p>
+                  )}
+                </Step>
+
+                <Step n={2} title="Like and repost the announcement" done={!!(ml?.liked && ml.reposted)}>
+                  {!eligible ? (
+                    <Locked />
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => {
+                          openX(ANNOUNCEMENT_ID ? intent("like", { tweet_id: ANNOUNCEMENT_ID }) : ANNOUNCEMENT);
+                          mochilist({ step: "engage", action: "like" });
+                        }}
+                        className={`btn px-4! py-2! text-base! ${ml?.liked ? "bg-[#ffc6d6]!" : ""}`}
+                      >
+                        ♥ {ml?.liked ? "Liked" : "Like"}
+                      </button>
+                      <button
+                        onClick={() => {
+                          openX(ANNOUNCEMENT_ID ? intent("retweet", { tweet_id: ANNOUNCEMENT_ID }) : ANNOUNCEMENT);
+                          mochilist({ step: "engage", action: "repost" });
+                        }}
+                        className={`btn px-4! py-2! text-base! ${ml?.reposted ? "bg-[#ccffb2]!" : ""}`}
+                      >
+                        ⟲ {ml?.reposted ? "Reposted" : "Repost"}
+                      </button>
+                      <a href={ANNOUNCEMENT} target="_blank" rel="noreferrer" className="self-center text-sm font-bold underline">
+                        View post
+                      </a>
+                    </div>
+                  )}
+                </Step>
+
+                <Step n={3} title="Comment that you claimed" done={!!ml?.commentLink}>
+                  {!eligible ? (
+                    <Locked />
+                  ) : ml?.commentLink ? (
+                    <a href={ml.commentLink} target="_blank" rel="noreferrer" className="text-sm font-bold underline">
+                      See your comment
+                    </a>
+                  ) : (
+                    <>
+                      <p className="text-sm font-semibold text-ink/70">
+                        {ANNOUNCEMENT_ID
+                          ? "Comment on the announcement saying you claimed your spot, then paste your comment's link."
+                          : `Post on X tagging ${X_HANDLE} saying you claimed your spot, then paste the link.`}
+                      </p>
+                      <button onClick={comment} className="btn mt-3 px-4! py-2! text-base!">
+                        <XLogo /> {ANNOUNCEMENT_ID ? "Comment on X" : "Post on X"}
+                      </button>
+                      <LinkProof step="comment" />
+                    </>
+                  )}
+                </Step>
+
+                <Step n={4} title={`Post with ${X_HANDLE} and $MOCHI`} done={!!ml?.postLink}>
+                  {!eligible ? (
+                    <Locked />
+                  ) : ml?.postLink ? (
+                    <a href={ml.postLink} target="_blank" rel="noreferrer" className="text-sm font-bold underline">
+                      See your post
+                    </a>
+                  ) : (
+                    <>
+                      <p className="whitespace-pre-line rounded-2xl border-4 border-dashed border-ink/30 bg-[#fffdf5] px-3 py-2 text-sm font-semibold">
+                        {claimPostText(ml!.collection!)}
+                      </p>
+                      <button onClick={() => openX(intent("post", { text: claimPostText(ml!.collection!) }))} className="btn btn-pink mt-3 px-4! py-2! text-base!">
+                        <XLogo /> Post on X
+                      </button>
+                      <LinkProof step="post" />
+                    </>
+                  )}
+                </Step>
+
+                {tasksDone && (
+                  <div className="rounded-3xl border-4 border-ink bg-[#fff1a8] p-4 text-center">
+                    <p className="font-bold">Every step is done. We just need to check your wallet one more time.</p>
+                    <button onClick={confirm} disabled={confirming} className="btn btn-pink mt-3 px-5! py-2!">
+                      {confirming ? "Checking…" : "Confirm my spot"}
+                    </button>
+                    {claimError && <p className={ERROR}>{claimError}</p>}
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

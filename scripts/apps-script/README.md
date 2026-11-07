@@ -75,6 +75,10 @@ A new deployment gets a new URL. To keep the existing one:
 | Referred By | Who invited them |
 | Referrals | Friends they brought in, updated on each new referral |
 | Votes, Airdrop | Filled in when their gallery Mochi reaches the airdrop goal |
+| MochiList | yes once their MochiList spot is confirmed |
+| MochiList Wallet, MochiList Collection | The holder wallet they checked and the collection found in it |
+| MochiList Comment, MochiList Post | Links to their verified comment and post |
+| MochiList At | When the spot was confirmed |
 
 Sorting or filtering the tab is safe: handles are found by name, never by row
 position. Filled-in cells are kept: someone who clears their browser and starts

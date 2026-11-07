@@ -58,11 +58,20 @@ export function sessionCookie(handle: string) {
 }
 
 // ---------- X OAuth 2.0 (PKCE) ----------
-export type OAuthState = { state: string; verifier: string; ts: number };
+// to: the page to come back to after X
+export type OAuthState = { state: string; verifier: string; ts: number; to?: string };
 
-export function newOAuth(): OAuthState {
-  return { state: randomBytes(16).toString("base64url"), verifier: randomBytes(32).toString("base64url"), ts: Date.now() };
+export function newOAuth(to?: string): OAuthState {
+  return { state: randomBytes(16).toString("base64url"), verifier: randomBytes(32).toString("base64url"), ts: Date.now(), to };
 }
+
+// Where Connect X may send people back to. Anything else goes to the sign-up on the home page.
+const RETURN_PAGES = ["/mochilist"];
+export const returnPage = (to: string | null | undefined) => (to && RETURN_PAGES.includes(to) ? to : "/");
+export const returnUrl = (origin: string, to: string | null | undefined, query: string) => {
+  const page = returnPage(to);
+  return `${origin}${page}?${query}${page === "/" ? "#join" : ""}`;
+};
 
 export function authorizeUrl(o: OAuthState, redirectUri: string) {
   const challenge = createHash("sha256").update(o.verifier).digest("base64url");

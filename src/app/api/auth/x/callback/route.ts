@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { OAUTH_COOKIE, exchangeAndFetchUser, sessionCookie, siteOrigin, unsign, type OAuthState } from "@/lib/auth";
+import { OAUTH_COOKIE, exchangeAndFetchUser, returnUrl, sessionCookie, siteOrigin, unsign, type OAuthState } from "@/lib/auth";
 import { enroll } from "@/lib/api";
 
 // X redirects here after the user approves (or cancels)
@@ -10,7 +10,7 @@ export async function GET(req: Request) {
   const o = unsign<OAuthState>((await cookies()).get(OAUTH_COOKIE)?.value);
 
   const done = (query: string) => {
-    const res = NextResponse.redirect(`${origin}/?${query}#join`);
+    const res = NextResponse.redirect(returnUrl(origin, o?.to, query));
     res.cookies.set({ name: OAUTH_COOKIE, value: "", path: "/api/auth", maxAge: 0 });
     return res;
   };

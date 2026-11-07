@@ -6,6 +6,7 @@ import { useSession } from "./Session";
 
 const LINKS = [
   { href: "/#join", label: "Join" },
+  { href: "/mochilist", label: "MochiList" },
   { href: "/#builder", label: "Builder" },
   { href: "/gallery", label: "Gallery" },
   { href: "/leaderboard", label: "Leaderboard" },

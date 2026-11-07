@@ -1,5 +1,7 @@
 // One sign-up and its tasks. Shared by the API routes and the UI.
 
+import type { MochiList } from "./mochilist";
+
 export type TaskId = "follow" | "engage" | "tag" | "wallet" | "mochi";
 
 export type Entry = {
@@ -19,6 +21,8 @@ export type Entry = {
   // Who invited them, and a hash of the network they added their wallet from
   referredBy?: string;
   ip?: string;
+  // MochiList claim for partner collection holders, separate from the tasks above
+  ml?: MochiList;
 };
 
 export const TASK_ORDER: TaskId[] = ["follow", "engage", "tag", "wallet", "mochi"];
@@ -47,6 +51,12 @@ export function signupRow(e: Entry, stats: RowStats = {}) {
     referrals: stats.referrals === undefined ? "" : String(stats.referrals),
     votes: stats.votes === undefined ? "" : String(stats.votes),
     airdrop: stats.airdrop ? "yes" : "",
+    mochilist: e.ml?.claimedAt ? "yes" : "",
+    mochilist_wallet: e.ml?.wallet ?? "",
+    mochilist_collection: e.ml?.collection ?? "",
+    mochilist_comment: e.ml?.commentLink ?? "",
+    mochilist_post: e.ml?.postLink ?? "",
+    mochilist_at: iso(e.ml?.claimedAt),
   };
 }
 export type SignupRow = ReturnType<typeof signupRow>;

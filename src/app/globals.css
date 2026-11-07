@@ -235,6 +235,42 @@ body {
 .spiral-unspin { animation: spiral-unspin 1500ms cubic-bezier(0.65, 0, 0.35, 1); }
 @keyframes spiral-bob {
   0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-8%) scale(1.06); }
+  50% { transform: translateY(-6px) scale(1.06); }
 }
 .spiral-bob { animation: spiral-bob 700ms ease-in-out infinite; }
+@keyframes spiral-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.spiral-float { animation: spiral-float 3.4s ease-in-out infinite; }
+
+/* MochiList: soft blobs in every site color, drifting behind the page */
+.mesh {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: #e2d4ff;
+  pointer-events: none;
+}
+.mesh span {
+  position: absolute;
+  width: 70vmax;
+  height: 70vmax;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, var(--c) 0%, color-mix(in srgb, var(--c) 45%, transparent) 38%, transparent 68%);
+  animation: mesh-drift var(--d) ease-in-out infinite alternate;
+  will-change: transform;
+}
+.mesh::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(22, 22, 22, 0.07) 1.5px, transparent 2px);
+  background-size: 22px 22px;
+}
+@keyframes mesh-drift {
+  0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+  50% { transform: translate(calc(var(--x) * 0.5), calc(var(--y) * 1.2)) scale(1.18) rotate(20deg); }
+  100% { transform: translate(var(--x), var(--y)) scale(0.92) rotate(-12deg); }
+}

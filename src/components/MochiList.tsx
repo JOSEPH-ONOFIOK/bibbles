@@ -113,7 +113,7 @@ export function MochiList() {
         </p>
       </div>
 
-      <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
+      <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
         <div ref={spiral} className="lg:sticky lg:top-28">
           <CollectionSpiral found={ml?.collection} checking={checking} spinKey={spinKey} />
         </div>

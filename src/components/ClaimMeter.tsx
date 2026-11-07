@@ -48,7 +48,7 @@ export function ClaimMeter({ stats, mine }: { stats: MlStats | null; mine?: stri
   }, [stats]);
 
   return (
-    <div className="chunk mx-auto max-w-6xl px-4 pt-4 pb-7 sm:px-7 sm:pt-6 sm:pb-9">
+    <div className="chunk mx-auto max-w-6xl px-4 pt-4 pb-16 sm:px-7 sm:pt-6 sm:pb-12">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <p className="text-xs font-extrabold tracking-[0.2em] text-ink/50 uppercase">MochiList spots</p>
@@ -100,6 +100,14 @@ export function ClaimMeter({ stats, mine }: { stats: MlStats | null; mine?: stri
                 />
                 <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 rounded-full border-2 border-ink bg-white px-1 font-display text-[9px] leading-tight tabular-nums sm:-bottom-3.5 sm:px-1.5 sm:text-[11px]">
                   {fmt(n)}
+                </span>
+                {/* the name: tilted on phones, where ten don't fit side by side */}
+                <span
+                  className={`absolute top-[calc(100%+15px)] left-1/2 origin-top-right -translate-x-full -rotate-45 font-display text-[10px] leading-none whitespace-nowrap transition duration-500 sm:top-[calc(100%+20px)] sm:origin-top sm:-translate-x-1/2 sm:rotate-0 sm:text-sm ${
+                    you ? "rounded-full bg-ink px-1.5 py-0.5 text-[#fff1a8]" : lit ? "" : "text-ink/55"
+                  }`}
+                >
+                  {c.name}
                 </span>
               </li>
             );

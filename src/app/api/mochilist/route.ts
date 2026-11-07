@@ -1,9 +1,23 @@
 import { authed, bad } from "@/lib/api";
 import { WALLET, toPublic } from "@/lib/entry";
-import { checkHoldings, mlClaimWallet, mlConfirm, mlWalletOwner } from "@/lib/holdings";
-import { ANNOUNCEMENT_ID, mlTasksDone } from "@/lib/mochilist";
+import { connection } from "next/server";
+import { checkHoldings, mlClaimedCount, mlConfirm, mlStats, mlWalletOwner } from "@/lib/holdings";
+import { ANNOUNCEMENT_ID, ML_CAP, mlTasksDone } from "@/lib/mochilist";
 import { store } from "@/lib/store";
 import { verifyClaimComment } from "@/lib/xpost";
+
+// GET → { claimed, cap, by } for the progress bar
+export async function GET() {
+  await connection();
+  try {
+    return Response.json(await mlStats(), { headers: { "Cache-Control": "no-store" } });
+  } catch (e) {
+    console.error("mochilist stats failed", e);
+    return bad("Couldn't load the count.", 500);
+  }
+}
+
+const FULL = `All ${ML_CAP.toLocaleString("en-US")} MochiList spots are taken.`;
 
 // POST { step, ... } moves the signed-in account through the MochiList claim.
 //   wallet   { wallet }                 checks it holds an NFT from an eligible collection
@@ -11,6 +25,7 @@ import { verifyClaimComment } from "@/lib/xpost";
 //   comment  { link }                   comment on the announcement saying they claimed (verified)
 //   claim                               retry the final check, if a chain was down
 // Once every step is done, the wallet is checked again and the spot is confirmed.
+// Only then is the wallet reserved and sent to the sheet.
 export async function POST(req: Request) {
   try {
     return await run(req);
@@ -36,6 +51,7 @@ async function run(req: Request) {
       if (!WALLET.test(wallet)) return bad("That isn't a valid EVM address. It starts with 0x followed by 40 characters.");
       const owner = await mlWalletOwner(wallet);
       if (owner && owner !== entry.handle.toLowerCase()) return bad("That wallet is already used for MochiList by another account.");
+      if ((await mlClaimedCount()) >= ML_CAP) return bad(FULL);
       if (!(await store.limit(`mlcheck:${entry.handle.toLowerCase()}`, 10, 600))) return bad("Too many checks. Try again in a few minutes.", 429);
 
       const { held, down } = await checkHoldings(wallet);
@@ -43,7 +59,6 @@ async function run(req: Request) {
         if (down.length) return bad(downMsg(down), 503);
         return bad("This wallet doesn't hold an NFT from an eligible collection.");
       }
-      await mlClaimWallet(wallet, entry.handle, ml.wallet);
       ml.wallet = wallet;
       ml.collection = held[0];
       break;
@@ -75,16 +90,25 @@ async function run(req: Request) {
   // Everything done: make sure they still hold before confirming
   if (mlTasksDone(ml) && ml.wallet) {
     const { held, down } = await checkHoldings(ml.wallet);
+    let error = "";
+    let status = 400;
     if (held.length) {
-      ml.collection = held.includes(ml.collection!) ? ml.collection : held[0];
-      ml.claimedAt = Date.now();
-      await mlConfirm(entry.handle);
+      const collection = held.includes(ml.collection!) ? ml.collection! : held[0];
+      const r = await mlConfirm(entry.handle, ml.wallet, collection);
+      if (r.ok) {
+        ml.collection = collection;
+        ml.claimedAt = Date.now();
+        if (r.spot) ml.spot = r.spot;
+      } else error = r.reason === "full" ? FULL : "That wallet was just used by another account. Check another wallet in step 1.";
     } else {
+      error = down.length ? downMsg(down) : "Your wallet no longer holds an NFT from an eligible collection. Check another wallet in step 1.";
+      if (down.length) status = 503;
+    }
+    if (error) {
       // Keep the step they just finished, so they can retry with Confirm my spot
       entry.updatedAt = Date.now();
       await store.put(entry);
-      const error = down.length ? downMsg(down) : "Your wallet no longer holds an NFT from an eligible collection. Check another wallet in step 1.";
-      return Response.json({ error, entry: toPublic(entry) }, { status: down.length ? 503 : 400 });
+      return Response.json({ error, entry: toPublic(entry) }, { status });
     }
   }
 

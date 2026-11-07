@@ -52,8 +52,9 @@ export function signupRow(e: Entry, stats: RowStats = {}) {
     votes: stats.votes === undefined ? "" : String(stats.votes),
     airdrop: stats.airdrop ? "yes" : "",
     mochilist: e.ml?.claimedAt ? "yes" : "",
-    mochilist_wallet: e.ml?.wallet ?? "",
-    mochilist_collection: e.ml?.collection ?? "",
+    // Only once the spot is confirmed
+    mochilist_wallet: e.ml?.claimedAt ? (e.ml.wallet ?? "") : "",
+    mochilist_collection: e.ml?.claimedAt ? (e.ml.collection ?? "") : "",
     mochilist_comment: e.ml?.commentLink ?? "",
     mochilist_at: iso(e.ml?.claimedAt),
   };

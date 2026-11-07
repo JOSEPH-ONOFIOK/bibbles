@@ -1,6 +1,6 @@
 // Server only: which eligible collections a wallet holds, read live from each chain.
 
-import { CHAIN_NAMES, COLLECTIONS, type Chain } from "./mochilist";
+import { CHAIN_NAMES, COLLECTIONS, ML_CAP, type Chain, type MlStats, type MochiList } from "./mochilist";
 import { hasDatabase, redis } from "./store";
 
 const RPC: Record<Chain, string> = {
@@ -46,17 +46,54 @@ export async function checkHoldings(wallet: string) {
   return { held, down: [...down] };
 }
 
-// One MochiList wallet per X account
+// One MochiList wallet per X account. A wallet is only reserved once its spot is confirmed.
 export async function mlWalletOwner(wallet: string) {
   return hasDatabase ? redis<string | null>("GET", `mlw:${wallet.toLowerCase()}`) : null;
 }
 
-export async function mlClaimWallet(wallet: string, handle: string, previous?: string) {
-  if (!hasDatabase) return;
-  if (previous) await redis("DEL", `mlw:${previous.toLowerCase()}`);
-  await redis("SET", `mlw:${wallet.toLowerCase()}`, handle.toLowerCase());
+const byKey = (collection: string) => `mlc:${collection}`;
+
+export async function mlClaimedCount() {
+  return hasDatabase ? redis<number>("SCARD", "mochilist") : 0;
 }
 
-export async function mlConfirm(handle: string) {
-  if (hasDatabase) await redis("SADD", "mochilist", handle.toLowerCase());
+type Confirm = { ok: true; spot: number } | { ok: false; reason: "full" | "wallet" };
+
+// Takes a spot and reserves the wallet, never going past ML_CAP even when
+// several people confirm at the same moment.
+export async function mlConfirm(handle: string, wallet: string, collection: string): Promise<Confirm> {
+  if (!hasDatabase) return { ok: true, spot: 0 };
+  const h = handle.toLowerCase();
+  const w = `mlw:${wallet.toLowerCase()}`;
+  const took = (await redis<string | null>("SET", w, h, "NX")) === "OK";
+  if (!took && (await redis<string | null>("GET", w)) !== h) return { ok: false, reason: "wallet" };
+
+  await redis("SADD", "mochilist", h);
+  const spot = await redis<number>("SCARD", "mochilist");
+  if (spot > ML_CAP) {
+    await redis("SREM", "mochilist", h);
+    if (took) await redis("DEL", w);
+    return { ok: false, reason: "full" };
+  }
+  await redis("SADD", byKey(collection), h);
+  return { ok: true, spot };
+}
+
+// Claimed spots in total and per collection
+export async function mlStats(): Promise<MlStats> {
+  if (!hasDatabase) return { claimed: 0, cap: ML_CAP, by: {} };
+  const count = () => Promise.all(COLLECTIONS.map((c) => redis<number>("SCARD", byKey(c.name))));
+  const [claimed, first] = await Promise.all([mlClaimedCount(), count()]);
+  let counts = first;
+  // Claims made before per-collection counts existed: add them once
+  if (counts.reduce((a, b) => a + b, 0) < claimed) {
+    const handles = await redis<string[]>("SMEMBERS", "mochilist");
+    const entries = handles.length ? await redis<(string | null)[]>("MGET", ...handles.map((h) => `e:${h}`)) : [];
+    for (const [i, raw] of entries.entries()) {
+      const name = raw ? (JSON.parse(raw) as { ml?: MochiList }).ml?.collection : undefined;
+      if (name) await redis("SADD", byKey(name), handles[i]);
+    }
+    counts = await count();
+  }
+  return { claimed, cap: ML_CAP, by: Object.fromEntries(COLLECTIONS.map((c, i) => [c.name, counts[i]])) };
 }

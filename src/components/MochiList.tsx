@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { burstFrom } from "@/lib/burst";
 import { WALLET } from "@/lib/entry";
 import { POWERED, X_HANDLE } from "@/lib/mochi";
-import { ANNOUNCEMENT, ANNOUNCEMENT_ID, claimText, mlTasksDone } from "@/lib/mochilist";
+import { ANNOUNCEMENT, ANNOUNCEMENT_ID, COLLECTIONS, ML_CAP, claimText, mlTasksDone, type MlStats } from "@/lib/mochilist";
+import { ClaimMeter } from "./ClaimMeter";
 import { CollectionSpiral } from "./CollectionSpiral";
 import { DevConnect, Step, XLogo, intent, openX } from "./Join";
 import { useSession } from "./Session";
@@ -68,9 +69,28 @@ export function MochiList() {
 
   const was = useRef(claimed);
   useEffect(() => {
-    if (claimed && !was.current && banner.current) burstFrom(banner.current, "hearts", 16);
+    if (claimed && !was.current && banner.current) {
+      const el = banner.current;
+      burstFrom(el, "hearts", 18);
+      setTimeout(() => burstFrom(el, "stars", 14), 450);
+    }
     was.current = claimed;
   }, [claimed]);
+
+  // The live count, loaded on arrival and again once their own spot is confirmed
+  const [stats, setStats] = useState<MlStats | null>(null);
+  useEffect(() => {
+    let live = true;
+    fetch("/api/mochilist")
+      .then((r) => r.json())
+      .then((d: MlStats) => live && typeof d.claimed === "number" && setStats(d))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [claimed]);
+  const full = !!stats && stats.claimed >= stats.cap;
+  const logo = COLLECTIONS.find((c) => c.name === ml?.collection)?.logo;
 
   const checkWallet = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,8 +129,12 @@ export function MochiList() {
           MochiList
         </h1>
         <p className="mt-2 font-bold text-ink/80">
-          Hold an NFT from one of these collections? Claim your MochiList spot. {POWERED}.
+          Hold an NFT from one of these collections? Claim one of {ML_CAP.toLocaleString("en-US")} GTD MochiList spots. {POWERED}.
         </p>
+      </div>
+
+      <div className="mt-8">
+        <ClaimMeter stats={stats} mine={ml?.collection} />
       </div>
 
       <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
@@ -131,7 +155,7 @@ export function MochiList() {
                   <button onClick={() => connect("/mochilist")} disabled={auth !== "x"} className="btn bg-ink! px-7! text-2xl! text-white!">
                     <XLogo className="h-5 w-5" /> Connect X
                   </button>
-                  <p className="mt-3 text-sm font-semibold text-ink/60">We check your comment and post come from your account. We never post for you.</p>
+                  <p className="mt-3 text-sm font-semibold text-ink/60">We check your comment comes from your account. We never post for you.</p>
                   {auth === "dev" && <DevConnect />}
                 </>
               )}
@@ -148,13 +172,34 @@ export function MochiList() {
               </div>
 
               {claimed ? (
-                <div ref={banner} className="pop-in mt-6 rounded-3xl border-4 border-ink bg-[#ccffb2] p-5 text-center">
-                  <p className="font-display text-4xl">You&apos;re on the MochiList 🩷</p>
-                  <p className="mt-2 font-bold">
-                    Claimed through {ml?.collection}. Your spot is saved to{" "}
-                    <span className="font-mono text-sm break-all">{ml?.wallet}</span>.
+                <div ref={banner} className="gtd-card pop-in relative mt-6 overflow-hidden rounded-3xl border-4 border-ink px-5 py-8 text-center shadow-[6px_6px_0_#161616] sm:px-8">
+                  {logo && (
+                    <div className="relative mx-auto h-28 w-28">
+                      <div className="gtd-ring absolute -inset-3 rounded-full border-4 border-dashed border-ink/40" />
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={logo} alt={ml?.collection} className="relative h-full w-full rounded-full border-[5px] border-ink bg-white object-cover shadow-[4px_4px_0_#161616]" />
+                    </div>
+                  )}
+                  <div className="stamp-in mx-auto mt-6 inline-block rounded-2xl border-[5px] border-ink bg-white px-5 py-2 shadow-[5px_5px_0_#161616]">
+                    <p className="font-display text-4xl leading-none text-pink sm:text-6xl" style={{ textShadow: "3px 3px 0 #161616" }}>
+                      GTD SECURED
+                    </p>
+                  </div>
+                  {!!ml?.spot && (
+                    <p className="mt-5 font-display text-2xl">
+                      Spot #{ml.spot.toLocaleString("en-US")} <span className="text-ink/50">of {ML_CAP.toLocaleString("en-US")}</span>
+                    </p>
+                  )}
+                  <p className="mt-2 font-bold">Claimed through {ml?.collection}. Your free mint is guaranteed to this wallet:</p>
+                  <p className="mx-auto mt-2 max-w-md rounded-xl border-[3px] border-ink bg-white/80 px-3 py-1.5 font-mono text-sm font-bold break-all">{ml?.wallet}</p>
+                  <p className="mt-4 text-sm font-semibold text-ink/70">See you at mint. Keep an eye on {X_HANDLE} for the date.</p>
+                </div>
+              ) : full ? (
+                <div className="mt-6 rounded-3xl border-4 border-ink bg-ink p-6 text-center text-white">
+                  <p className="font-display text-4xl">All spots are taken</p>
+                  <p className="mt-2 font-bold text-white/80">
+                    All {ML_CAP.toLocaleString("en-US")} MochiList spots are claimed. Follow {X_HANDLE} for what&apos;s next.
                   </p>
-                  <p className="mt-2 text-sm font-semibold text-ink/70">See you at mint. Keep an eye on {X_HANDLE} for the date.</p>
                 </div>
               ) : (
                 <div className="mt-6 space-y-4">
@@ -179,7 +224,7 @@ export function MochiList() {
                       <p className="mt-2 text-sm font-extrabold">Eligible: this wallet holds {ml?.collection}.</p>
                     ) : (
                       <p className="mt-2 text-sm font-semibold text-ink/60">
-                        Paste the wallet that holds your NFT. No signing, no payment, no approvals: we only look up what it holds.
+                        Paste the wallet that holds your NFT. No signing, no payment, no approvals: we only look up what it holds, and only save it once your spot is confirmed.
                       </p>
                     )}
                   </Step>

@@ -274,3 +274,34 @@ body {
   50% { transform: translate(calc(var(--x) * 0.5), calc(var(--y) * 1.2)) scale(1.18) rotate(20deg); }
   100% { transform: translate(var(--x), var(--y)) scale(0.92) rotate(-12deg); }
 }
+
+/* MochiList progress: a glossy fill in the site colors with stripes sliding along */
+.meter-fill {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 55%),
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.28) 0 10px, transparent 10px 20px),
+    linear-gradient(90deg, #cf4f9c, #ff9fb6, #fff1a8, #ccffb2, #bfe3ff, #e2d4ff);
+  background-size: 100% 100%, 28px 28px, 100% 100%;
+  animation: meter-slide 1.2s linear infinite;
+}
+@keyframes meter-slide { to { background-position: 0 0, 28px 0, 0 0; } }
+
+/* GTD secured: a card that shimmers through the palette, and a stamp that thuds down */
+.gtd-card {
+  background: linear-gradient(120deg, #ffc6d6, #fff1a8, #ccffb2, #bfe3ff, #e2d4ff, #ffc6d6);
+  background-size: 300% 300%;
+  animation: gtd-shimmer 8s ease-in-out infinite;
+}
+@keyframes gtd-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+@keyframes stamp-in {
+  0% { transform: scale(2.6) rotate(-14deg); opacity: 0; }
+  60% { transform: scale(0.94) rotate(-5deg); opacity: 1; }
+  80% { transform: scale(1.04) rotate(-6deg); }
+  100% { transform: scale(1) rotate(-6deg); opacity: 1; }
+}
+.stamp-in { animation: stamp-in 650ms 250ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+@keyframes gtd-ring { to { transform: rotate(360deg); } }
+.gtd-ring { animation: gtd-ring 6s linear infinite; }

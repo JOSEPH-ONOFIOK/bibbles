@@ -23,6 +23,12 @@ export const COLLECTIONS: Collection[] = [
   { name: "Rekt TRADOOR", chain: "robinhood", contract: "0x7b3ecfa33657de415ff269dc97dfa82954cee706", logo: "/collections/rekt-tradooor.jpg" },
 ];
 
+// How many MochiList spots there are. Claims stop once they're gone.
+export const ML_CAP = 1200;
+
+// Public numbers for the progress bar
+export type MlStats = { claimed: number; cap: number; by: Record<string, number> };
+
 // The MochiList announcement people like, repost and comment on. Hardcoded to the profile
 // until the post is up: replace it with the post's status link and the steps use that post.
 export const ANNOUNCEMENT = "https://x.com/themochieffect";
@@ -40,6 +46,8 @@ export type MochiList = {
   reposted?: boolean;
   commentLink?: string;
   claimedAt?: number;
+  // Their place in the queue, 1 to ML_CAP
+  spot?: number;
 };
 
 export const mlTasksDone = (m?: MochiList) => !!(m?.collection && m.liked && m.reposted && m.commentLink);

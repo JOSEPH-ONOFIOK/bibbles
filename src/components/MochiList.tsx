@@ -44,8 +44,8 @@ function LinkProof({ step }: { step: "comment" }) {
   );
 }
 
-function Locked() {
-  return <p className="text-sm font-bold text-ink/50">Check your wallet in step 1 first.</p>;
+function Locked({ children = "Check your wallet in step 1 first." }: { children?: React.ReactNode }) {
+  return <p className="text-sm font-bold text-ink/50">🔒 {children}</p>;
 }
 
 export function MochiList() {
@@ -230,9 +230,27 @@ export function MochiList() {
                     )}
                   </Step>
 
-                  <Step n={2} title="Like and repost the announcement" done={!!(ml?.liked && ml.reposted)}>
+                  <Step n={2} title={`Follow ${X_HANDLE}`} done={!!ml?.followed}>
                     {!eligible ? (
                       <Locked />
+                    ) : (
+                      <button
+                        onClick={() => {
+                          openX(intent("follow", { screen_name: X_HANDLE.replace("@", "") }));
+                          mochilist({ step: "follow" });
+                        }}
+                        className={`btn px-4! py-2! text-base! ${ml?.followed ? "bg-[#ccffb2]!" : "bg-ink! text-white!"}`}
+                      >
+                        <XLogo /> {ml?.followed ? "Following" : `Follow ${X_HANDLE}`}
+                      </button>
+                    )}
+                  </Step>
+
+                  <Step n={3} title="Like and repost the announcement" done={!!(ml?.liked && ml.reposted)}>
+                    {!eligible ? (
+                      <Locked />
+                    ) : !ml?.followed ? (
+                      <Locked>Follow {X_HANDLE} in step 2 first.</Locked>
                     ) : (
                       <div className="flex flex-wrap gap-2">
                         <button
@@ -260,9 +278,11 @@ export function MochiList() {
                     )}
                   </Step>
 
-                  <Step n={3} title="Comment that you claimed" done={!!ml?.commentLink}>
+                  <Step n={4} title="Comment that you claimed" done={!!ml?.commentLink}>
                     {!eligible ? (
                       <Locked />
+                    ) : !ml?.followed || !ml.liked || !ml.reposted ? (
+                      <Locked>{!ml?.followed ? `Follow ${X_HANDLE} in step 2 first.` : "Like and repost the announcement in step 3 first."}</Locked>
                     ) : ml?.commentLink ? (
                       <a href={ml.commentLink} target="_blank" rel="noreferrer" className="text-sm font-bold underline">
                         See your comment

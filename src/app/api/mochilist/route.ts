@@ -2,6 +2,7 @@ import { authed, bad } from "@/lib/api";
 import { WALLET, toPublic } from "@/lib/entry";
 import { connection } from "next/server";
 import { checkHoldings, mlClaimedCount, mlCommunityCounts, mlConfirm, mlStats, mlWalletOwner } from "@/lib/holdings";
+import { X_HANDLE } from "@/lib/mochi";
 import { ANNOUNCEMENT_ID, ML_CAP, limitOf, mlTasksDone } from "@/lib/mochilist";
 import { store } from "@/lib/store";
 import { verifyClaimComment } from "@/lib/xpost";
@@ -28,6 +29,7 @@ async function withRoom(names: string[]) {
 
 // POST { step, ... } moves the signed-in account through the MochiList claim.
 //   wallet   { wallet }                 checks it holds an NFT from an eligible collection
+//   follow                              clicked follow on our X account
 //   engage   { action: like|repost }    clicked like or repost on the announcement
 //   comment  { link }                   comment on the announcement saying they claimed (verified)
 //   claim                               retry the final check, if a chain was down
@@ -73,8 +75,14 @@ async function run(req: Request) {
       break;
     }
 
+    case "follow":
+      if (!ml.collection) return bad("Check your wallet first.");
+      ml.followed = true;
+      break;
+
     case "engage":
       if (!ml.collection) return bad("Check your wallet first.");
+      if (!ml.followed) return bad(`Follow ${X_HANDLE} first.`);
       if (body.action === "like") ml.liked = true;
       else if (body.action === "repost") ml.reposted = true;
       else return bad("Unknown action.");
@@ -82,6 +90,8 @@ async function run(req: Request) {
 
     case "comment": {
       if (!ml.collection) return bad("Check your wallet first.");
+      if (!ml.followed) return bad(`Follow ${X_HANDLE} first.`);
+      if (!ml.liked || !ml.reposted) return bad("Like and repost the announcement first.");
       const r = await verifyClaimComment(String(body.link ?? ""), entry.handle, ANNOUNCEMENT_ID);
       if (!r.ok) return bad(r.error);
       ml.commentLink = r.link;

@@ -29,7 +29,8 @@ const ARM = Array.from({ length: 121 }, (_, k) => {
   return `${p.x.toFixed(2)},${p.y.toFixed(2)}`;
 }).join(" ");
 
-export function CollectionSpiral({ found, checking, spinKey }: { found?: string; checking: boolean; spinKey: number }) {
+// full: communities with no spots left, shown with a green tab
+export function CollectionSpiral({ found, checking, spinKey, full = [] }: { found?: string; checking: boolean; spinKey: number; full?: string[] }) {
   // A fresh successful check (new spinKey) spins first. Already eligible on load: no spin.
   const [seenKey, setSeenKey] = useState(spinKey);
   const [spinning, setSpinning] = useState(false);
@@ -107,9 +108,13 @@ export function CollectionSpiral({ found, checking, spinKey }: { found?: string;
                 >
                   <span
                     className="block rounded-full border-2 border-ink px-1.5 font-display text-[10px] leading-[1.35] whitespace-nowrap shadow-[2px_2px_0_#161616] sm:px-2 sm:text-xs"
-                    style={{ background: TAB[i % TAB.length], rotate: `${i % 2 ? 4 : -4}deg` }}
+                    style={{
+                      background: full.includes(c.name) ? "#3ecf6e" : TAB[i % TAB.length],
+                      color: full.includes(c.name) ? "#fff" : undefined,
+                      rotate: `${i % 2 ? 4 : -4}deg`,
+                    }}
                   >
-                    {c.name}
+                    {full.includes(c.name) ? `✓ ${c.name} · full` : c.name}
                   </span>
                 </div>
               </div>

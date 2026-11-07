@@ -90,6 +90,7 @@ export function MochiList() {
     };
   }, [claimed]);
   const full = !!stats && stats.claimed >= stats.cap;
+  const fullOnes = stats ? COLLECTIONS.filter((c) => (stats.by[c.name] ?? 0) >= c.limit).map((c) => c.name) : [];
   const logo = COLLECTIONS.find((c) => c.name === ml?.collection)?.logo;
 
   const checkWallet = async (e: React.FormEvent) => {
@@ -139,7 +140,7 @@ export function MochiList() {
 
       <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
         <div ref={spiral} className="lg:sticky lg:top-28">
-          <CollectionSpiral found={ml?.collection} checking={checking} spinKey={spinKey} />
+          <CollectionSpiral found={ml?.collection} checking={checking} spinKey={spinKey} full={fullOnes} />
         </div>
         <div className="chunk min-w-0 p-5 sm:p-8">
           {notice && <p className="pop-in mb-5 rounded-2xl border-4 border-ink bg-[#fff1a8] px-4 py-2 text-center font-bold">{notice}</p>}

@@ -1,8 +1,8 @@
 import { authed, bad } from "@/lib/api";
 import { WALLET, toPublic } from "@/lib/entry";
 import { connection } from "next/server";
-import { checkHoldings, mlClaimedCount, mlConfirm, mlStats, mlWalletOwner } from "@/lib/holdings";
-import { ANNOUNCEMENT_ID, ML_CAP, mlTasksDone } from "@/lib/mochilist";
+import { checkHoldings, mlClaimedCount, mlCommunityCounts, mlConfirm, mlStats, mlWalletOwner } from "@/lib/holdings";
+import { ANNOUNCEMENT_ID, ML_CAP, limitOf, mlTasksDone } from "@/lib/mochilist";
 import { store } from "@/lib/store";
 import { verifyClaimComment } from "@/lib/xpost";
 
@@ -18,6 +18,13 @@ export async function GET() {
 }
 
 const FULL = `All ${ML_CAP.toLocaleString("en-US")} MochiList spots are taken.`;
+const fullMsg = (names: string[]) => `${names.join(" and ")} ${names.length > 1 ? "are" : "is"} fully claimed.`;
+
+// The collections they hold that still have room, in the order given
+async function withRoom(names: string[]) {
+  const counts = await mlCommunityCounts(names);
+  return names.filter((n, i) => counts[i] < limitOf(n));
+}
 
 // POST { step, ... } moves the signed-in account through the MochiList claim.
 //   wallet   { wallet }                 checks it holds an NFT from an eligible collection
@@ -60,7 +67,9 @@ async function run(req: Request) {
         return bad("This wallet doesn't hold an NFT from an eligible collection.");
       }
       ml.wallet = wallet;
-      ml.collection = held[0];
+      const open = await withRoom(held);
+      if (!open.length) return bad(fullMsg(held));
+      ml.collection = open[0];
       break;
     }
 
@@ -93,13 +102,20 @@ async function run(req: Request) {
     let error = "";
     let status = 400;
     if (held.length) {
-      const collection = held.includes(ml.collection!) ? ml.collection! : held[0];
-      const r = await mlConfirm(entry.handle, ml.wallet, collection);
+      // Their checked collection first, then anything else they hold
+      const candidates = [...held.filter((h) => h === ml.collection), ...held.filter((h) => h !== ml.collection)];
+      const r = await mlConfirm(entry.handle, ml.wallet, candidates);
       if (r.ok) {
-        ml.collection = collection;
+        ml.collection = r.collection;
         ml.claimedAt = Date.now();
         if (r.spot) ml.spot = r.spot;
-      } else error = r.reason === "full" ? FULL : "That wallet was just used by another account. Check another wallet in step 1.";
+      } else
+        error =
+          r.reason === "full"
+            ? FULL
+            : r.reason === "community"
+              ? fullMsg(held)
+              : "That wallet was just used by another account. Check another wallet in step 1.";
     } else {
       error = down.length ? downMsg(down) : "Your wallet no longer holds an NFT from an eligible collection. Check another wallet in step 1.";
       if (down.length) status = 503;

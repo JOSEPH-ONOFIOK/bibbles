@@ -48,7 +48,7 @@ export function ClaimMeter({ stats, mine }: { stats: MlStats | null; mine?: stri
   }, [stats]);
 
   return (
-    <div className="chunk mx-auto max-w-6xl px-4 pt-4 pb-24 sm:px-7 sm:pt-6 sm:pb-20">
+    <div className="chunk mx-auto max-w-6xl px-4 pt-4 pb-20 sm:px-7 sm:pt-6 sm:pb-20">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <p className="text-xs font-extrabold tracking-[0.2em] text-ink/50 uppercase">MochiList spots</p>
@@ -116,11 +116,11 @@ export function ClaimMeter({ stats, mine }: { stats: MlStats | null; mine?: stri
                     />
                   </div>
                   {done ? (
-                    <span className="rounded-full border-[1.5px] border-ink bg-[#3ecf6e] px-1 font-display text-[8px] leading-tight text-white sm:border-2 sm:px-1.5 sm:text-[11px]">
+                    <span className="hidden rounded-full border-2 border-ink bg-[#3ecf6e] px-1.5 font-display text-[11px] leading-tight text-white sm:block">
                       FULL
                     </span>
                   ) : (
-                    <span className="font-display text-[8px] leading-tight whitespace-nowrap tabular-nums sm:text-[11px]">
+                    <span className="hidden font-display text-[11px] leading-tight whitespace-nowrap tabular-nums sm:block">
                       {fmt(n)}
                       <span className="text-ink/45">/{fmt(c.limit)}</span>
                     </span>
@@ -128,7 +128,7 @@ export function ClaimMeter({ stats, mine }: { stats: MlStats | null; mine?: stri
                 </div>
                 {/* the name: tilted on phones, where ten don't fit side by side */}
                 <span
-                  className={`absolute top-[calc(100%+34px)] left-1/2 origin-top-right -translate-x-full -rotate-45 font-display text-[10px] leading-none whitespace-nowrap transition duration-500 sm:top-[calc(100%+44px)] sm:origin-top sm:-translate-x-1/2 sm:rotate-0 sm:text-sm ${
+                  className={`absolute top-[calc(100%+18px)] left-1/2 origin-top-right -translate-x-full -rotate-45 font-display text-[10px] leading-none whitespace-nowrap transition duration-500 sm:top-[calc(100%+44px)] sm:w-[5.5rem] sm:origin-top sm:-translate-x-1/2 sm:rotate-0 sm:text-center sm:text-xs sm:leading-tight sm:whitespace-normal ${
                     you ? "rounded-full bg-ink px-1.5 py-0.5 text-[#fff1a8]" : done ? "text-[#1f9d55]" : lit ? "" : "text-ink/55"
                   }`}
                 >

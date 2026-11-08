@@ -12,13 +12,14 @@ const SPIN_MS = 1500;
 
 // Point on the spiral arm at step i (fractional steps draw the line), as % of the box
 function at(i: number) {
-  const angle = 0.6 + i * 0.95;
-  const r = 15 + (26 * i) / (N - 1);
+  // About 1.35 turns whatever the number of collections
+  const angle = 0.6 + (i * 8.6) / (N - 1);
+  const r = 16 + (25 * i) / (N - 1);
   return { x: 50 + r * Math.cos(angle), y: 50 + r * Math.sin(angle) };
 }
 
 // Position and size of logo i
-const spot = (i: number) => ({ ...at(i), size: 12 + (4 * i) / (N - 1) });
+const spot = (i: number) => ({ ...at(i), size: (N > 10 ? 10.5 : 12) + (4 * i) / (N - 1) });
 
 // Name tab colors, cycling through the site's palette
 const TAB = ["#ffc6d6", "#ccffb2", "#fff1a8", "#bfe3ff", "#e2d4ff", "#ffe5b4"];

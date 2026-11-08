@@ -26,6 +26,7 @@ export const COLLECTIONS: Collection[] = [
   { name: "Blokyz", chain: "ethereum", contract: "0x86ffb7988913e85a5a07d459a5165ab1273cfe62", limit: 50, logo: "/collections/blokyz.jpg" }, // Original Blokyz
   { name: "TMO", chain: "robinhood", contract: "0x0d58589536f442da1c192c89232448c23d8b41bb", limit: 50, logo: "/collections/tmo.jpg" }, // TMO: Initiates
   { name: "Freedz", chain: "ethereum", contract: "0x993873f58f0ce4728bbd68dd5fabcb75ef48e7c4", limit: 60, logo: "/collections/freedz.jpg" }, // FREEDZ, @freedznft
+  { name: "Cash Grab", chain: "robinhood", contract: "0x66de4a428a3b890abee81968bcfdb385fe80d22d", limit: 60, logo: "/collections/cash-grab.jpg" }, // @RealCashpig
 ];
 
 // How many MochiList spots there are in total: every community's limit added up.

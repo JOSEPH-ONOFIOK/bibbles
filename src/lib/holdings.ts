@@ -68,24 +68,34 @@ export async function mlConfirm(handle: string, wallet: string, candidates: stri
   const w = `mlw:${wallet.toLowerCase()}`;
   const took = (await redis<string | null>("SET", w, h, "NX")) === "OK";
   if (!took && (await redis<string | null>("GET", w)) !== h) return { ok: false, reason: "wallet" };
-  const undo = async () => {
-    await redis("SREM", "mochilist", h);
+  const release = async () => {
     if (took) await redis("DEL", w);
   };
 
+  // Community first, then the total: the per-community counts are never behind the
+  // total, so the stats never mistake an in-progress claim for a missing one.
+  let collection = "";
+  for (const c of candidates) {
+    await redis("SADD", byKey(c), h);
+    if ((await redis<number>("SCARD", byKey(c))) <= limitOf(c)) {
+      collection = c;
+      break;
+    }
+    await redis("SREM", byKey(c), h);
+  }
+  if (!collection) {
+    await release();
+    return { ok: false, reason: "community" };
+  }
   await redis("SADD", "mochilist", h);
   const spot = await redis<number>("SCARD", "mochilist");
   if (spot > ML_CAP) {
-    await undo();
+    await redis("SREM", "mochilist", h);
+    await redis("SREM", byKey(collection), h);
+    await release();
     return { ok: false, reason: "full" };
   }
-  for (const collection of candidates) {
-    await redis("SADD", byKey(collection), h);
-    if ((await redis<number>("SCARD", byKey(collection))) <= limitOf(collection)) return { ok: true, spot, collection };
-    await redis("SREM", byKey(collection), h);
-  }
-  await undo();
-  return { ok: false, reason: "community" };
+  return { ok: true, spot, collection };
 }
 
 // Spots claimed per community, for the collections given
@@ -105,8 +115,9 @@ export async function mlStats(): Promise<MlStats> {
     const handles = await redis<string[]>("SMEMBERS", "mochilist");
     const entries = handles.length ? await redis<(string | null)[]>("MGET", ...handles.map((h) => `e:${h}`)) : [];
     for (const [i, raw] of entries.entries()) {
-      const name = raw ? (JSON.parse(raw) as { ml?: MochiList }).ml?.collection : undefined;
-      if (name) await redis("SADD", byKey(name), handles[i]);
+      const ml = raw ? (JSON.parse(raw) as { ml?: MochiList }).ml : undefined;
+      // Only spots that were actually confirmed
+      if (ml?.claimedAt && ml.collection) await redis("SADD", byKey(ml.collection), handles[i]);
     }
     counts = await count();
   }

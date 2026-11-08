@@ -101,11 +101,6 @@ export function Airdrop() {
           <span className="rounded-xl bg-ink px-2 text-[#fff1a8]">{AIRDROP_SHARE}</span> of {TOKEN} will be bought & airdropped back to the community.
         </p>
         <p className="mt-2 font-bold text-ink/70">Do four quick tasks, drop your wallet, and you&apos;re in.</p>
-        {stats && stats.applied > 0 && (
-          <p className="mt-3 font-display text-xl">
-            {stats.applied.toLocaleString("en-US")} <span className="text-ink/60">applied so far</span>
-          </p>
-        )}
       </div>
 
       <div className="chunk mt-8 p-5 sm:p-8">

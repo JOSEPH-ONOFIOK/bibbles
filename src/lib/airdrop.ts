@@ -15,11 +15,11 @@ export const refLink = (handle: string) => `${host}/mochiclaim?ref=${handle}`;
 
 // Filled in for their quote post
 export const qrtText = (handle: string) =>
-  `Applying for the ${TOKEN} airdrop 🩷\n\n${AIRDROP_SHARE} of ${TOKEN} is being bought back & airdropped to the community. Join me 👇\n\n${refLink(handle)}${AIRDROP_POST_ID ? "" : `\n\n${X_HANDLE}`}`;
+  `${TOKEN} Airdrop Application is Live.\n\n${AIRDROP_SHARE} of ${TOKEN} will be bought & airdropped back to the community\n\nRegister → ${refLink(handle)}\n\nDrop your wallets = ${TOKEN}.${AIRDROP_POST_ID ? "" : `\n\n${X_HANDLE}`}`;
 
 export type Airdrop = {
   followed?: boolean;
-  liked?: boolean;
+  commented?: boolean;
   reposted?: boolean;
   qrtLink?: string;
   wallet?: string;

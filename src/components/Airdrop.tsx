@@ -40,7 +40,7 @@ export function Airdrop() {
   const readRef = useInvite();
   const ad = entry?.ad;
   const applied = !!ad?.appliedAt;
-  const engaged = !!(ad?.liked && ad.reposted);
+  const engaged = !!(ad?.commented && ad.reposted);
 
   const [stats, setStats] = useState<{ applied: number; invites: number } | null>(null);
   useEffect(() => {
@@ -175,19 +175,19 @@ export function Airdrop() {
                   </button>
                 </Step>
 
-                <Step n={2} title="Like and repost the airdrop post" done={engaged}>
+                <Step n={2} title="Comment and retweet the airdrop post" done={engaged}>
                   {!ad?.followed ? (
                     <Locked>Follow {X_HANDLE} in step 1 first.</Locked>
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       <button
                         onClick={() => {
-                          openX(AIRDROP_POST_ID ? intent("like", { tweet_id: AIRDROP_POST_ID }) : AIRDROP_POST);
-                          airdrop({ step: "engage", action: "like" });
+                          openX(AIRDROP_POST_ID ? intent("post", { in_reply_to: AIRDROP_POST_ID, text: `Applying for the ${TOKEN} airdrop 🩷` }) : AIRDROP_POST);
+                          airdrop({ step: "engage", action: "comment" });
                         }}
-                        className={`btn px-4! py-2! text-base! ${ad?.liked ? "bg-[#ffc6d6]!" : ""}`}
+                        className={`btn px-4! py-2! text-base! ${ad?.commented ? "bg-[#ffc6d6]!" : ""}`}
                       >
-                        ♥ {ad?.liked ? "Liked" : "Like"}
+                        💬 {ad?.commented ? "Commented" : "Comment"}
                       </button>
                       <button
                         onClick={() => {
@@ -196,7 +196,7 @@ export function Airdrop() {
                         }}
                         className={`btn px-4! py-2! text-base! ${ad?.reposted ? "bg-[#ccffb2]!" : ""}`}
                       >
-                        ⟲ {ad?.reposted ? "Reposted" : "Repost"}
+                        ⟲ {ad?.reposted ? "Retweeted" : "Retweet"}
                       </button>
                       <a href={AIRDROP_POST} target="_blank" rel="noreferrer" className="self-center text-sm font-bold underline">
                         View post
@@ -207,7 +207,7 @@ export function Airdrop() {
 
                 <Step n={3} title="Quote it with your invite link" done={!!ad?.qrtLink}>
                   {!ad?.followed || !engaged ? (
-                    <Locked>{!ad?.followed ? `Follow ${X_HANDLE} in step 1 first.` : "Like and repost the airdrop post in step 2 first."}</Locked>
+                    <Locked>{!ad?.followed ? `Follow ${X_HANDLE} in step 1 first.` : "Comment and retweet the airdrop post in step 2 first."}</Locked>
                   ) : ad?.qrtLink ? (
                     <a href={ad.qrtLink} target="_blank" rel="noreferrer" className="text-sm font-bold underline">
                       See your quote

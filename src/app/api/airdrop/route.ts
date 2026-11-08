@@ -9,7 +9,7 @@ import { verifyAirdropQrt } from "@/lib/xpost";
 
 // $MOCHI airdrop application. Steps must go in order:
 //   follow                            clicked follow on our X account
-//   engage  { action: like|repost }   clicked like or repost on the airdrop post
+//   engage  { action: comment|repost } clicked comment or retweet on the airdrop post
 //   qrt     { link }                  quote of the airdrop post with their invite link (verified)
 //   wallet  { wallet, ref? }          EVM wallet, one per X account; completes the application
 // GET → { applied, invites? } (invites: friends the signed-in account brought)
@@ -43,7 +43,7 @@ async function run(req: Request) {
   if (ad.appliedAt) return Response.json({ entry: toPublic(entry) });
 
   const needFollow = () => (!ad.followed ? bad(`Follow ${X_HANDLE} first.`) : null);
-  const needEngage = () => needFollow() ?? (!ad.liked || !ad.reposted ? bad("Like and repost the airdrop post first.") : null);
+  const needEngage = () => needFollow() ?? (!ad.commented || !ad.reposted ? bad("Comment on and retweet the airdrop post first.") : null);
   const needQrt = () => needEngage() ?? (!ad.qrtLink ? bad("Quote the airdrop post with your invite link first.") : null);
 
   switch (body.step) {
@@ -54,7 +54,7 @@ async function run(req: Request) {
     case "engage": {
       const no = needFollow();
       if (no) return no;
-      if (body.action === "like") ad.liked = true;
+      if (body.action === "comment") ad.commented = true;
       else if (body.action === "repost") ad.reposted = true;
       else return bad("Unknown action.");
       break;

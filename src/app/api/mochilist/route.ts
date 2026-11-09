@@ -1,6 +1,7 @@
 import { authed, bad } from "@/lib/api";
 import { WALLET, toPublic } from "@/lib/entry";
 import { connection } from "next/server";
+import { cached } from "@/lib/cache";
 import { checkHoldings, mlClaimedCount, mlCommunityCounts, mlConfirm, mlStats, mlWalletOwner } from "@/lib/holdings";
 import { X_HANDLE } from "@/lib/mochi";
 import { ANNOUNCEMENT_ID, ML_CAP, limitOf, mlTasksDone } from "@/lib/mochilist";
@@ -11,7 +12,10 @@ import { verifyClaimComment } from "@/lib/xpost";
 export async function GET() {
   await connection();
   try {
-    return Response.json(await mlStats(), { headers: { "Cache-Control": "no-store" } });
+    // Same numbers for everyone: cached here for 15 s, and by Vercel's CDN for 15 s
+    return Response.json(await cached("mlStats", 15_000, mlStats), {
+      headers: { "Cache-Control": "public, max-age=0, s-maxage=15, stale-while-revalidate=30" },
+    });
   } catch (e) {
     console.error("mochilist stats failed", e);
     return bad("Couldn't load the count.", 500);

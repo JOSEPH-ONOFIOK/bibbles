@@ -43,7 +43,9 @@ export function Airdrop() {
   const engaged = !!(ad?.commented && ad.reposted);
 
   const [stats, setStats] = useState<{ applied: number; invites: number } | null>(null);
+  // Only needed once they've applied, to show their invite count
   useEffect(() => {
+    if (!applied) return;
     let live = true;
     fetch("/api/airdrop")
       .then((r) => r.json())

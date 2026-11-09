@@ -1,5 +1,6 @@
 import { connection } from "next/server";
 import { getSession } from "@/lib/auth";
+import { cached } from "@/lib/cache";
 import { hasDatabase } from "@/lib/store";
 import { isDisplayed, referralStats, topReferrers } from "@/lib/wall";
 
@@ -10,7 +11,8 @@ export async function GET() {
   try {
     const s = await getSession();
     const [top, me] = await Promise.all([
-      topReferrers(),
+      // The leaderboard is the same for everyone
+      cached("topReferrers", 30_000, () => topReferrers()),
       s ? Promise.all([referralStats(s.h), isDisplayed(s.h)]).then(([r, displayed]) => ({ ...r, displayed })) : null,
     ]);
     return Response.json({ on: true, top, me });

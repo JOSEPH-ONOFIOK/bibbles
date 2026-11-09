@@ -27,12 +27,16 @@ export const COLLECTIONS: Collection[] = [
   { name: "TMO", chain: "robinhood", contract: "0x0d58589536f442da1c192c89232448c23d8b41bb", limit: 50, logo: "/collections/tmo.jpg" }, // TMO: Initiates
   { name: "Freedz", chain: "ethereum", contract: "0x993873f58f0ce4728bbd68dd5fabcb75ef48e7c4", limit: 80, logo: "/collections/freedz.jpg" }, // FREEDZ, @freedznft
   { name: "Cash Grab", chain: "robinhood", contract: "0x66de4a428a3b890abee81968bcfdb385fe80d22d", limit: 60, logo: "/collections/cash-grab.jpg" }, // @RealCashpig
-  { name: "Vamps", chain: "robinhood", contract: "0x93a3ecadfe057b695fe3a98bbd4fd3e4557ca55d", limit: 40, logo: "/collections/vamps.jpg" }, // VAMPS, @vampsonchain
+  { name: "Joystick Junkies", chain: "robinhood", contract: "0x9294e3b8268369977f46ca263370da8ca2e7a351", limit: 30, logo: "/collections/joystick-junkies.jpg" },
   { name: "Chimpers", chain: "ethereum", contract: "0x307af7d28afee82092aa95d35644898311ca5360", limit: 30, logo: "/collections/chimpers.jpg" }, // @ChimpersHQ
 ];
 
 // How many MochiList spots there are in total: every community's limit added up.
-export const ML_CAP = COLLECTIONS.reduce((n, c) => n + c.limit, 0);
+// Communities we no longer partner with: the spots their holders already claimed are kept
+// and still count toward the total, but nobody new can claim through them.
+export const RETIRED: Record<string, number> = { Vamps: 40 };
+
+export const ML_CAP = COLLECTIONS.reduce((n, c) => n + c.limit, 0) + Object.values(RETIRED).reduce((a, b) => a + b, 0);
 
 export const limitOf = (name: string) => COLLECTIONS.find((c) => c.name === name)?.limit ?? 0;
 

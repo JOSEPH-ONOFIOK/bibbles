@@ -1,6 +1,6 @@
 // Server only: which eligible collections a wallet holds, read live from each chain.
 
-import { CHAIN_NAMES, COLLECTIONS, ML_CAP, limitOf, type Chain, type MlStats, type MochiList } from "./mochilist";
+import { CHAIN_NAMES, COLLECTIONS, ML_CAP, limitOf, type Chain, type MlStats } from "./mochilist";
 import { hasDatabase, redis } from "./store";
 
 const RPC: Record<Chain, string> = {
@@ -107,19 +107,8 @@ export async function mlCommunityCounts(names: string[]) {
 // Claimed spots in total and per collection
 export async function mlStats(): Promise<MlStats> {
   if (!hasDatabase) return { claimed: 0, cap: ML_CAP, by: {} };
-  const count = () => Promise.all(COLLECTIONS.map((c) => redis<number>("SCARD", byKey(c.name))));
-  const [claimed, first] = await Promise.all([mlClaimedCount(), count()]);
-  let counts = first;
-  // Claims made before per-collection counts existed: add them once
-  if (counts.reduce((a, b) => a + b, 0) < claimed) {
-    const handles = await redis<string[]>("SMEMBERS", "mochilist");
-    const entries = handles.length ? await redis<(string | null)[]>("MGET", ...handles.map((h) => `e:${h}`)) : [];
-    for (const [i, raw] of entries.entries()) {
-      const ml = raw ? (JSON.parse(raw) as { ml?: MochiList }).ml : undefined;
-      // Only spots that were actually confirmed
-      if (ml?.claimedAt && ml.collection) await redis("SADD", byKey(ml.collection), handles[i]);
-    }
-    counts = await count();
-  }
+  const [claimed, counts] = await Promise.all([mlClaimedCount(), Promise.all(COLLECTIONS.map((c) => redis<number>("SCARD", byKey(c.name))))]);
+  // Every confirmed claim records its community, so the counts are read as they are.
+  // (Claims through a community that's since been removed count in the total only.)
   return { claimed, cap: ML_CAP, by: Object.fromEntries(COLLECTIONS.map((c, i) => [c.name, counts[i]])) };
 }

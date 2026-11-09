@@ -22,7 +22,7 @@ export const COLLECTIONS: Collection[] = [
   { name: "Vaultlings", chain: "robinhood", contract: "0x23708e501cbeaa92f45183197c673fdabf993484", limit: 70, logo: "/collections/vaultlings.jpg" },
   { name: "CannaCats", chain: "robinhood", contract: "0x53716c211179a342e37734f4fb46b276c975359a", limit: 40, logo: "/collections/cannacat.jpg" }, // CannaCats V2, @CannaCatMeme
   { name: "Rekt TRADOOR", chain: "robinhood", contract: "0x7b3ecfa33657de415ff269dc97dfa82954cee706", limit: 30, logo: "/collections/rekt-tradooor.jpg" },
-  { name: "Goat Ranch Club", chain: "robinhood", contract: "0x95a85681e28988b4ef503369470b4da7681c4bc8", limit: 140, logo: "/collections/goat-ranch-club.jpg" },
+  { name: "Goat Ranch Club", chain: "robinhood", contract: "0x95a85681e28988b4ef503369470b4da7681c4bc8", limit: 160, logo: "/collections/goat-ranch-club.jpg" },
   { name: "Blokyz", chain: "ethereum", contract: "0x86ffb7988913e85a5a07d459a5165ab1273cfe62", limit: 50, logo: "/collections/blokyz.jpg" }, // Original Blokyz
   { name: "TMO", chain: "robinhood", contract: "0x0d58589536f442da1c192c89232448c23d8b41bb", limit: 50, logo: "/collections/tmo.jpg" }, // TMO: Initiates
   { name: "Freedz", chain: "ethereum", contract: "0x993873f58f0ce4728bbd68dd5fabcb75ef48e7c4", limit: 80, logo: "/collections/freedz.jpg" }, // FREEDZ, @freedznft

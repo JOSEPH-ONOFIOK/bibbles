@@ -1,4 +1,5 @@
 import { authed, bad } from "@/lib/api";
+import { CLOSED_MSG, applyOpen } from "@/lib/deadline";
 import { ipHash } from "@/lib/auth";
 import { PINNED_ID, TASK_ORDER, WALLET, toPublic, type TaskId } from "@/lib/entry";
 import { hasDatabase, store } from "@/lib/store";
@@ -21,6 +22,8 @@ export async function POST(req: Request) {
 }
 
 async function complete(req: Request) {
+  // Nothing new after the deadline
+  if (!applyOpen()) return bad(CLOSED_MSG, 403);
   const a = await authed(req);
   if ("error" in a) return a.error;
   const { entry, body } = a;

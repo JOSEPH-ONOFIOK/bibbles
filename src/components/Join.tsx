@@ -8,6 +8,7 @@ import { PINNED_ID, PINNED_POST, TASK_ORDER, WALLET, isComplete, type TaskId } f
 import { downloadMyMochi, readInvite, useMyMochi } from "@/lib/myMochi";
 import { InviteLink, InvitePopup } from "./Referrals";
 import { useWall } from "./WallContext";
+import { ClosedCard, Countdown, useApplyOpen } from "./Countdown";
 
 const US = X_HANDLE.replace("@", "");
 
@@ -165,6 +166,7 @@ export function Join() {
   const { ready, auth, entry, notice, connect, disconnect, task } = useSession();
   const { name, touched } = useMyMochi();
   const { on, refresh } = useWall();
+  const open = useApplyOpen();
   // null until they type, so the saved wallet shows by default
   const [walletDraft, setWallet] = useState<string | null>(null);
   const [walletError, setWalletError] = useState<string | null>(null);
@@ -210,6 +212,7 @@ export function Join() {
           Join the Mochis
         </h2>
         <p className="mt-2 font-bold text-ink/80">Connect your X, do five quick tasks, and you&apos;re in the running. {POWERED}.</p>
+        <Countdown className="mt-4" />
       </div>
 
       <div className="chunk mt-8 p-5 sm:p-8">
@@ -221,7 +224,9 @@ export function Join() {
           <p className="mt-8 text-center font-display text-2xl text-ink/50">Loading…</p>
         ) : !entry ? (
           <div className="mt-6 text-center">
-            {auth === "off" ? (
+            {!open ? (
+              <ClosedCard handle={X_HANDLE} />
+            ) : auth === "off" ? (
               <p className="font-display text-2xl">Sign ups open soon. Follow {X_HANDLE} to hear first.</p>
             ) : (
               <>
@@ -235,6 +240,7 @@ export function Join() {
           </div>
         ) : (
           <>
+            {!open && <ClosedCard handle={X_HANDLE} />}
             <div className="mt-6 flex flex-wrap items-center justify-between gap-2 rounded-2xl border-4 border-ink bg-[#e2d4ff] px-4 py-2">
               <p className="font-bold">
                 Connected as <span className="font-display text-xl">@{entry.handle}</span>

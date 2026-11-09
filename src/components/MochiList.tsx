@@ -7,6 +7,7 @@ import { POWERED, X_HANDLE } from "@/lib/mochi";
 import { ANNOUNCEMENT, ANNOUNCEMENT_ID, COLLECTIONS, ML_CAP, claimText, mlTasksDone, type MlStats } from "@/lib/mochilist";
 import { ClaimMeter } from "./ClaimMeter";
 import { CollectionSpiral } from "./CollectionSpiral";
+import { ClosedCard, Countdown, useApplyOpen } from "./Countdown";
 import { DevConnect, Step, XLogo, intent, openX } from "./Join";
 import { useSession } from "./Session";
 
@@ -51,6 +52,7 @@ function Locked({ children = "Check your wallet in step 1 first." }: { children?
 export function MochiList() {
   const { ready, auth, entry, notice, connect, disconnect, mochilist } = useSession();
   const ml = entry?.ml;
+  const open = useApplyOpen();
   const eligible = !!ml?.collection;
   const claimed = !!ml?.claimedAt;
   const tasksDone = mlTasksDone(ml);
@@ -132,6 +134,7 @@ export function MochiList() {
         <p className="mt-2 font-bold text-ink/80">
           Hold an NFT from one of these collections? Claim one of {ML_CAP.toLocaleString("en-US")} GTD MochiList spots. {POWERED}.
         </p>
+        <Countdown className="mt-4" />
       </div>
 
       <div className="mt-8">
@@ -149,7 +152,9 @@ export function MochiList() {
             <p className="text-center font-display text-2xl text-ink/50">Loading…</p>
           ) : !entry ? (
             <div className="text-center">
-              {auth === "off" ? (
+              {!open ? (
+                <ClosedCard handle={X_HANDLE} />
+              ) : auth === "off" ? (
                 <p className="font-display text-2xl">Claims open soon. Follow {X_HANDLE} to hear first.</p>
               ) : (
                 <>
@@ -195,6 +200,8 @@ export function MochiList() {
                   <p className="mx-auto mt-2 max-w-md rounded-xl border-[3px] border-ink bg-white/80 px-3 py-1.5 font-mono text-sm font-bold break-all">{ml?.wallet}</p>
                   <p className="mt-4 text-sm font-semibold text-ink/70">See you at mint. Keep an eye on {X_HANDLE} for the date.</p>
                 </div>
+              ) : !open ? (
+                <ClosedCard handle={X_HANDLE} />
               ) : full ? (
                 <div className="mt-6 rounded-3xl border-4 border-ink bg-ink p-6 text-center text-white">
                   <p className="font-display text-4xl">All spots are taken</p>

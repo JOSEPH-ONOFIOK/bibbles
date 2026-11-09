@@ -41,7 +41,7 @@ export type MlStats = { claimed: number; cap: number; by: Record<string, number>
 
 // The MochiList announcement people like, repost and comment on. Hardcoded to the profile
 // until the post is up: replace it with the post's status link and the steps use that post.
-export const ANNOUNCEMENT = "https://x.com/themochieffect/status/2119446247350095876";
+export const ANNOUNCEMENT = "https://x.com/themochieffect/status/2119809934791524722";
 export const ANNOUNCEMENT_ID = /\/status(?:es)?\/(\d+)/.exec(ANNOUNCEMENT)?.[1] ?? "";
 
 // Filled in for their comment on the announcement

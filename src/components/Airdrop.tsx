@@ -7,6 +7,7 @@ import { WALLET } from "@/lib/entry";
 import { TOKEN, X_HANDLE } from "@/lib/mochi";
 import { DevConnect, Step, XLogo, intent, openX } from "./Join";
 import { useSession } from "./Session";
+import { ClosedCard, Countdown, useApplyOpen } from "./Countdown";
 
 const ERROR = "mt-2 text-sm font-bold text-[#c2185b]";
 const INPUT =
@@ -39,6 +40,7 @@ export function Airdrop() {
   const { ready, auth, entry, notice, connect, disconnect, airdrop } = useSession();
   const readRef = useInvite();
   const ad = entry?.ad;
+  const open = useApplyOpen();
   const applied = !!ad?.appliedAt;
   const engaged = !!(ad?.commented && ad.reposted);
 
@@ -103,6 +105,7 @@ export function Airdrop() {
           <span className="rounded-xl bg-ink px-2 text-[#fff1a8]">{AIRDROP_SHARE}</span> of {TOKEN} will be bought & airdropped back to the community.
         </p>
         <p className="mt-2 font-bold text-ink/70">Do four quick tasks, drop your wallet, and you&apos;re in.</p>
+        <Countdown className="mt-4" />
       </div>
 
       <div className="chunk mt-8 p-5 sm:p-8">
@@ -112,7 +115,9 @@ export function Airdrop() {
           <p className="text-center font-display text-2xl text-ink/50">Loading…</p>
         ) : !entry ? (
           <div className="text-center">
-            {auth === "off" ? (
+            {!open ? (
+              <ClosedCard handle={X_HANDLE} />
+            ) : auth === "off" ? (
               <p className="font-display text-2xl">Applications open soon. Follow {X_HANDLE} to hear first.</p>
             ) : (
               <>
@@ -158,6 +163,8 @@ export function Airdrop() {
                   </p>
                 </div>
               </div>
+            ) : !open ? (
+              <ClosedCard handle={X_HANDLE} />
             ) : (
               <div className="mt-6 space-y-4">
                 <Step n={1} title={`Follow ${X_HANDLE}`} done={!!ad?.followed}>

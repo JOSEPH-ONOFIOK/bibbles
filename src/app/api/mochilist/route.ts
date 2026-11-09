@@ -1,4 +1,5 @@
 import { authed, bad } from "@/lib/api";
+import { CLOSED_MSG, applyOpen } from "@/lib/deadline";
 import { WALLET, toPublic } from "@/lib/entry";
 import { connection } from "next/server";
 import { cached } from "@/lib/cache";
@@ -51,6 +52,8 @@ export async function POST(req: Request) {
 const downMsg = (down: string[]) => `We couldn't reach ${down.join(" and ")} just now. Try again in a minute.`;
 
 async function run(req: Request) {
+  // Nothing new after the deadline
+  if (!applyOpen()) return bad(CLOSED_MSG, 403);
   const a = await authed(req);
   if ("error" in a) return a.error;
   const { entry, body } = a;

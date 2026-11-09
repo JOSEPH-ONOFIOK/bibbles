@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   AURAS,
   BACKGROUNDS,
@@ -15,7 +15,7 @@ import {
 import { burst, burstFrom } from "@/lib/burst";
 import { X_HANDLE } from "@/lib/mochi";
 import { AIRDROP_VOTES, TOKEN } from "@/lib/mochi";
-import { downloadMyMochi, setMyMochiName, useMyMochi } from "@/lib/myMochi";
+import { LOOK_KEY, downloadMyMochi, setMyMochiName, useMyMochi } from "@/lib/myMochi";
 import { useSession } from "./Session";
 import { useWall } from "./WallContext";
 
@@ -101,6 +101,13 @@ export function Builder() {
   const setName = (n: string) => setMyMochiName(n);
   const [bump, setBump] = useState(0);
   const stage = useRef<HTMLDivElement>(null);
+
+  // Remembered so the game (/play) starts with the Mochi they made
+  useEffect(() => {
+    try {
+      localStorage.setItem(LOOK_KEY, JSON.stringify({ ...look, name }));
+    } catch {}
+  }, [look, name]);
 
   const set = (key: Tab, value: string, from?: HTMLElement) => {
     setLook((l) => ({ ...l, [key]: value }));

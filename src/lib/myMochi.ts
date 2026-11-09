@@ -8,6 +8,9 @@ const listeners = new Set<() => void>();
 
 const INVITE = "mochi_ref";
 
+// The look last made in the builder, read by the game
+export const LOOK_KEY = "mochi_look";
+
 // A friend's invite from ?ref=handle, kept until this visitor adds their wallet
 export function rememberInvite() {
   try {

@@ -1,19 +1,31 @@
 import type { Metadata, Viewport } from "next";
 import { Play } from "@/components/game/Play";
+import { GamePreview } from "@/components/game/GamePreview";
+import { Shell } from "@/components/Shell";
+import { GAME_OPEN } from "@/game/data";
 
-const description = "Play as your Mochi: explore, gather, craft and build your cosy Pocket.";
+const description = "Mochi Game V1, coming soon. Play as your Mochi: explore, gather, farm, build the village, make friends and earn $MOCHI in weekly Trials.";
 
 export const metadata: Metadata = {
-  title: "Play",
+  title: "Mochi Game",
   description,
   alternates: { canonical: "/play" },
-  openGraph: { url: "/play", title: "Play · Mochi", description },
-  twitter: { title: "Play · Mochi", description },
+  openGraph: { url: "/play", title: "Mochi Game V1 · Coming soon", description },
+  twitter: { title: "Mochi Game V1 · Coming soon", description },
 };
 
-// A game screen: no pinch zoom, no page scroll
-export const viewport: Viewport = { width: "device-width", initialScale: 1, maximumScale: 1, userScalable: false };
+// The open game is a full-screen game: no pinch zoom. The preview is a normal page.
+export const viewport: Viewport = GAME_OPEN
+  ? { width: "device-width", initialScale: 1, maximumScale: 1, userScalable: false }
+  : { width: "device-width", initialScale: 1 };
 
 export default function PlayPage() {
+  // Until launch: the game plays itself above the docs
+  if (!GAME_OPEN)
+    return (
+      <Shell>
+        <GamePreview />
+      </Shell>
+    );
   return <Play />;
 }

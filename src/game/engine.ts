@@ -109,15 +109,28 @@ export class Engine {
   constructor(
     private canvas: HTMLCanvasElement,
     private host: Host,
-    opts: { demo?: boolean; focus?: { x: number; y: number } } = {},
+    opts: { demo?: boolean; focus?: { x: number; y: number }; at?: [number, number]; region?: number } = {},
   ) {
     this.demo = !!opts.demo;
     if (opts.focus) this.focus = opts.focus;
+    // Start somewhere else: a Frontier world, or a spot in tiles
+    if (opts.region) this.world = buildRegion(opts.region);
     this.ctx = canvas.getContext("2d")!;
     this.player.x = this.world.spawn.x;
     this.player.y = this.world.spawn.y;
     this.season = host.season();
+    if (opts.region) {
+      this.player.x = this.world.spawn.x + 200;
+      this.player.y = this.world.spawn.y;
+    }
+    if (opts.at) {
+      this.player.x = opts.at[0] * TILE;
+      this.player.y = opts.at[1] * TILE;
+    }
     this.ground = this.paintGround();
+    // Start the camera on the Mochi rather than gliding in from the corner
+    this.cam.x = this.player.x - 400;
+    this.cam.y = this.player.y - 300;
   }
 
   // ---------- lifecycle ----------

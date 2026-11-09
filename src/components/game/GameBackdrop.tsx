@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import { STARTERS, calendar } from "@/game/data";
 import { Engine, type Host } from "@/game/engine";
 import { MochiArt, type MochiLook } from "@/components/MochiArt";
@@ -30,7 +30,20 @@ const demoHost = (): Host => ({
 });
 
 // focus: where to keep the Mochi on screen, so it isn't hidden behind whatever sits on top
-export function GameBackdrop({ className = "", focus }: { className?: string; focus?: { wide: [number, number]; narrow: [number, number] } }) {
+// at: a starting spot in tiles; region: a Frontier world to show instead of home
+export function GameBackdrop({
+  className = "",
+  focus,
+  at,
+  region,
+}: {
+  className?: string;
+  focus?: { wide: [number, number]; narrow: [number, number] };
+  at?: [number, number];
+  region?: number;
+}) {
+  const svgId = `demo-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
+  const where = useRef({ at, region });
   const canvas = useRef<HTMLCanvasElement>(null);
   // Read once, when the engine starts
   const focusAt = useRef(focus);
@@ -41,7 +54,7 @@ export function GameBackdrop({ className = "", focus }: { className?: string; fo
     const wide = matchMedia("(min-width: 640px)").matches;
     const fo = focusAt.current;
     const f = fo ? (wide ? fo.wide : fo.narrow) : [0.5, 0.5];
-    const e = new Engine(canvas.current, demoHost(), { demo: true, focus: { x: f[0], y: f[1] } });
+    const e = new Engine(canvas.current, demoHost(), { demo: true, focus: { x: f[0], y: f[1] }, ...where.current });
     const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
     // The demo Mochi, drawn from the same art as everywhere else
     const svg = box.current.querySelector("svg");
@@ -89,7 +102,7 @@ export function GameBackdrop({ className = "", focus }: { className?: string; fo
     <div ref={box} className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`} aria-hidden>
       <canvas ref={canvas} className="h-full w-full" />
       <div className="hidden">
-        <MochiArt look={DEMO_LOOK} svgId="demo-mochi" viewBox="160 280 680 760" />
+        <MochiArt look={DEMO_LOOK} svgId={svgId} viewBox="160 280 680 760" />
       </div>
     </div>
   );

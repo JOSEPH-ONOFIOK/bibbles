@@ -5,7 +5,7 @@ import { SITE_URL } from "./site";
 
 // The airdrop announcement people like, repost and quote. Hardcoded to the profile until
 // the post is up: replace it with the post's status link and the steps use that post.
-export const AIRDROP_POST = "https://x.com/themochieffect/status/2119809934791524722";
+export const AIRDROP_POST = "https://x.com/themochieffect/status/2120097390787223708";
 export const AIRDROP_POST_ID = /\/status(?:es)?\/(\d+)/.exec(AIRDROP_POST)?.[1] ?? "";
 
 export const AIRDROP_SHARE = "1%";

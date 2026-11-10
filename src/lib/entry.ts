@@ -83,5 +83,5 @@ export const HANDLE = /^\w{1,15}$/;
 
 // The pinned post people like, repost and reply to. Hardcoded to the profile until the post is up:
 // replace it with the post's status link and steps 2 and 3 switch to that post on their own.
-export const PINNED_POST = "https://x.com/themochieffect/status/2119809934791524722";
+export const PINNED_POST = "https://x.com/themochieffect/status/2120097390787223708";
 export const PINNED_ID = /\/status(?:es)?\/(\d+)/.exec(PINNED_POST)?.[1] ?? "";

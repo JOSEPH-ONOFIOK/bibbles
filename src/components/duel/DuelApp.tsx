@@ -17,6 +17,7 @@ type Result = { outcome: number; winner: Address | null; reason: string; signatu
 type State = { match: Match; a: RunView; b: RunView; result: Result | null; now: number };
 
 const ZERO = "0x0000000000000000000000000000000000000000";
+const MAX_STAKE_MOCHI = 50_000;
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 const same = (a?: string | null, b?: string | null) => Boolean(a && b && a.toLowerCase() === b.toLowerCase());
 const fmt = (v: bigint | string, decimals: number) =>
@@ -247,7 +248,7 @@ function Lobby({
   onMatch: (id: string) => void;
   onChange: () => void;
 }) {
-  const presets = ["100", "500", "1000", "5000"];
+  const presets = ["100", "1000", "5000", "10000", "25000", "50000"];
   const [amount, setAmount] = useState("1000");
   const [invite, setInvite] = useState("");
   const [confirm, setConfirm] = useState<{ kind: "create"; stake: bigint; invited: Address | null } | { kind: "join"; match: Match } | null>(null);
@@ -260,7 +261,9 @@ function Lobby({
     }
   }, [amount, config.decimals]);
   const min = BigInt(config.minStake);
-  const max = BigInt(config.maxStake);
+  // Stakes go up to 50,000 MOCHI on the site, even while the contract allows more
+  const siteMax = parseUnits(String(MAX_STAKE_MOCHI), config.decimals);
+  const max = BigInt(config.maxStake) < siteMax ? BigInt(config.maxStake) : siteMax;
   const inRange = stake !== null && stake >= min && stake <= max;
   const short_ = balance && stake !== null && balance.mochi < stake;
   const inviteOk = invite === "" || /^0x[0-9a-fA-F]{40}$/.test(invite);

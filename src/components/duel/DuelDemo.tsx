@@ -38,12 +38,12 @@ function bot(s: Sim, careful: boolean) {
 
 type Hud = { left: number; me: number; meHits: number; them: number; themHits: number; over: boolean };
 
-export function DuelDemo() {
+export function DuelDemo({ start = "watch" }: { start?: "watch" | "practice" }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const box = useRef<HTMLDivElement>(null);
   const keys = useRef(new Set<string>());
   const pointer = useRef<{ x: number; y: number } | null>(null);
-  const [mode, setMode] = useState<"watch" | "practice">("watch");
+  const [mode, setMode] = useState<"watch" | "practice">(start);
   const [round, setRound] = useState(0);
   const [hud, setHud] = useState<Hud>({ left: SECONDS, me: 0, meHits: 0, them: 0, themHits: 0, over: false });
 
@@ -126,7 +126,7 @@ export function DuelDemo() {
 
   const practice = mode === "practice";
   const meName = practice ? "You" : "Mochi A";
-  const themName = practice ? "Practice bot" : "Mochi B";
+  const themName = practice ? "AI" : "Mochi B";
   const won = hud.me > hud.them || (hud.me === hud.them && hud.meHits < hud.themHits);
   const tie = hud.me === hud.them && hud.meHits === hud.themHits;
 
@@ -138,13 +138,13 @@ export function DuelDemo() {
   return (
     <div ref={box} className="chunk overflow-hidden p-3 sm:p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-display text-2xl sm:text-3xl">{practice ? "🎮 Free practice" : "📺 Watch a demo duel"}</h2>
+        <h2 className="font-display text-2xl sm:text-3xl">{practice ? "🤖 Practice vs AI (free)" : "📺 Watch a demo duel"}</h2>
         <div className="flex gap-2">
           <button className={`btn px-4! py-1! text-base! ${!practice ? "btn-pink" : ""}`} onClick={() => (setMode("watch"), setRound((r) => r + 1))}>
             Watch
           </button>
           <button className={`btn px-4! py-1! text-base! ${practice ? "btn-pink" : ""}`} onClick={() => (setMode("practice"), setRound((r) => r + 1))}>
-            Practice free
+            Play vs AI
           </button>
         </div>
       </div>
@@ -183,7 +183,7 @@ export function DuelDemo() {
           <div className="absolute inset-0 grid place-items-center bg-ink/40 p-4">
             <div className="pop-in chunk max-w-sm p-5 text-center">
               <p className="font-display text-3xl">
-                {tie ? "Tie: full refund" : practice ? (won ? "You won! 🎉" : "The bot won this one") : `${won ? meName : themName} wins!`}
+                {tie ? "Tie: full refund" : practice ? (won ? "You won! 🎉" : "The AI won this one") : `${won ? meName : themName} wins!`}
               </p>
               <p className="mt-1 font-semibold">
                 {hud.me} vs {hud.them}

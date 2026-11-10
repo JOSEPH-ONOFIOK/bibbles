@@ -66,3 +66,15 @@ export const RULES = [
   "If no result is posted in time, either player can take a full refund from the contract.",
   "The winner receives 75% of both stakes, the amount shown before you confirm. Ties and refunds return every stake in full.",
 ];
+
+// ---------- weekly leaderboard ----------
+// Weeks match the game's Trials: they start at 00:00 UTC on Thursdays.
+const DAY = 24 * 60 * 60 * 1000;
+export const duelWeek = (now = Date.now()) => Math.floor(Math.floor(now / DAY) / 7);
+export const weekEnds = (week: number) => (week + 1) * 7 * DAY;
+
+export const PRIZE_POOL = 1_000_000; // MOCHI each week
+// Share of the pool for ranks 1–10, in percent (adds up to 100)
+export const PRIZE_SPLIT = [25, 15, 10, 8, 7, 7, 7, 7, 7, 7];
+// To win a prize: finish in profit, with at least this many wins that week
+export const PRIZE_MIN_WINS = 3;

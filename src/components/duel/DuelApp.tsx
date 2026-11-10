@@ -5,6 +5,7 @@ import { decodeEventLog, formatUnits, parseUnits, type Address, type Hex } from 
 import { DUEL_CONTRACT, MOCHI_TOKEN, Outcome, PONS_URL, RULES, START_WINDOW_S, Status, duelConfigured, erc20Abi, escrowAbi, robinhood, startMessage } from "@/duel/config";
 import { DuelDemo } from "./DuelDemo";
 import { DuelGame } from "./DuelGame";
+import { DuelLeaderboard } from "./DuelLeaderboard";
 import { useWallet, type Wallet } from "./wallet";
 
 // ------------------------------------------------------------------ types & helpers
@@ -141,6 +142,7 @@ export function DuelApp() {
       ) : (
         <HowItWorks config={config} />
       )}
+      {!matchId && <DuelLeaderboard address={w.address} symbol={config?.symbol} />}
     </div>
   );
 }
@@ -722,6 +724,12 @@ function MatchRoom({ id, w, config, onBack, onChange }: { id: string; w: Wallet;
                       </button>
                     )}
                   </div>
+                  {now < m!.joinDeadline && (
+                    <div className="mt-5">
+                      <p className="mb-2 font-bold">While you wait, warm up against the AI. It&apos;s free and doesn&apos;t affect your duel.</p>
+                      <DuelDemo start="practice" />
+                    </div>
+                  )}
                 </>
               )}
 

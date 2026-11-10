@@ -7,7 +7,7 @@
 //   duel:{id}:relay        lock so the result is only sent onchain once
 
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { createPublicClient, createWalletClient, getAddress, http, type Address, type Hex } from "viem";
+import { createPublicClient, createWalletClient, formatUnits, getAddress, http, type Address, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import {
   COUNTDOWN_S,
@@ -17,6 +17,7 @@ import {
   START_WINDOW_S,
   Status,
   UPLOAD_GRACE_S,
+  duelWeek,
   erc20Abi,
   escrowAbi,
   robinhood,
@@ -232,8 +233,45 @@ export async function resolve(m: OnchainMatch, now = Date.now()): Promise<Result
   };
   const set = await redis<string | null>("SET", k(m.id, "result"), JSON.stringify(result), "NX", "EX", TTL);
   const final = set ? result : (await getResult(m.id))!;
-  if (set) await relay(m.id, final);
+  if (set) {
+    await record(m, final).catch((e) => console.error("duel leaderboard", m.id, e));
+    await relay(m.id, final);
+  }
   return final;
+}
+
+// ------------------------------------------------------------------ weekly leaderboard
+//   dboard:{week}           sorted set: wallet → net MOCHI won that week (won minus lost)
+//   dstats:{week}:{wallet}  hash: wins, losses
+
+const BOARD_TTL = 60 * 60 * 24 * 120;
+export const boardKey = (week: number) => `dboard:${week}`;
+export const statsKey = (week: number, address: string) => `dstats:${week}:${address.toLowerCase()}`;
+
+/** Adds a decided match to the week's board. Called once per match, when its result is first signed. */
+async function record(m: OnchainMatch, r: Result) {
+  if (!r.winner) return; // ties and voids refund everyone, so they don't move the board
+  const { decimals } = await readToken();
+  const stake = BigInt(m.stake);
+  const pot = stake * BigInt(2);
+  const payout = pot - (pot * BigInt(m.feeBps)) / BigInt(10_000);
+  const loser = r.winner.toLowerCase() === m.playerA.toLowerCase() ? m.playerB : m.playerA;
+  const won = Number(formatUnits(payout - stake, decimals));
+  const lost = Number(formatUnits(stake, decimals));
+  const week = duelWeek(r.decidedAt);
+  const w = r.winner.toLowerCase();
+  const l = loser.toLowerCase();
+  await Promise.all([
+    redis("ZINCRBY", boardKey(week), won, w),
+    redis("ZINCRBY", boardKey(week), -lost, l),
+    redis("HINCRBY", statsKey(week, w), "wins", 1),
+    redis("HINCRBY", statsKey(week, l), "losses", 1),
+  ]);
+  await Promise.all([
+    redis("EXPIRE", boardKey(week), BOARD_TTL),
+    redis("EXPIRE", statsKey(week, w), BOARD_TTL),
+    redis("EXPIRE", statsKey(week, l), BOARD_TTL),
+  ]);
 }
 
 /** Pays the winner without anyone needing to click, when DUEL_RELAYER_KEY is set. Players can always claim themselves. */

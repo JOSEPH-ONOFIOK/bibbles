@@ -85,6 +85,9 @@ export function Play() {
                   Play without
                 </button>
               </div>
+              <Link href="/play/duel" className="btn mt-3 bg-[#fff1a8]! px-6! py-2! text-xl!">
+                ⚔️ Mochi Duel: stake $MOCHI, 1 vs 1
+              </Link>
             </>
           ) : (
             <>
@@ -403,6 +406,9 @@ function Game() {
           <button onClick={() => setMenu({ type: "pockets" })} className="hud-round hud-round-lg" aria-label="Visit Pockets" title="Visit Pockets">
             🏡
           </button>
+          <Link href="/play/duel" className="hud-round hud-round-lg" aria-label="Mochi Duel" title="Mochi Duel: stake $MOCHI, 1 vs 1">
+            ⚔️
+          </Link>
           <button
             onClick={() => {
               setMuted(!muted);

@@ -644,7 +644,7 @@ function MatchRoom({ id, w, config, onBack, onChange }: { id: string; w: Wallet;
     [id, w.address, play?.token],
   );
 
-  const shareLink = typeof window !== "undefined" ? `${location.origin}/duel?match=${id}` : "";
+  const shareLink = typeof window !== "undefined" ? `${location.origin}/play/duel?match=${id}` : "";
   const now = (state?.now ?? 0) / 1000; // server time, from the last poll
   const r = state?.result;
   const iWon = r && w.address && same(r.winner, w.address);

@@ -10,7 +10,6 @@ const LINKS = [
   { href: "/mochiclaim", label: "Airdrop" },
   { href: "/#builder", label: "Builder" },
   { href: "/play", label: "Play" },
-  { href: "/duel", label: "Duel" },
   { href: "/gallery", label: "Gallery" },
   { href: "/leaderboard", label: "Leaderboard" },
   { href: "/#stickers", label: "Stickers" },

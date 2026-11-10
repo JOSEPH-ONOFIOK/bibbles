@@ -12,6 +12,7 @@ type Props = {
   resume: string; // moves the server already has (after a reload)
   upload: Upload;
   opponent: { started: boolean; score?: number } | null;
+  opponentName?: string;
   onFinished: () => void;
 };
 
@@ -29,7 +30,7 @@ export function toCode(x: number, y: number) {
   return (((Math.round(a / (Math.PI / 4)) % 8) + 8) % 8) + 1;
 }
 
-export function DuelGame({ seed, startAt, offset, resume, upload, opponent, onFinished }: Props) {
+export function DuelGame({ seed, startAt, offset, resume, upload, opponent, opponentName = "Opponent", onFinished }: Props) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const sim = useRef<Sim | null>(null);
   const moves = useRef("");
@@ -165,7 +166,7 @@ export function DuelGame({ seed, startAt, offset, resume, upload, opponent, onFi
           You: {hud.score} <span className="text-base text-ink/60">· {hud.hits} hits</span>
         </span>
         <span className="rounded-full border-[3px] border-ink bg-[#e2d4ff] px-3 py-0.5">
-          Opponent: {opponent?.started ? (opponent.score ?? 0) : "not started"}
+          {opponentName}: {opponent?.started ? (opponent.score ?? 0) : "not started"}
         </span>
       </div>
       <div className="relative">

@@ -65,6 +65,7 @@ export const RULES = [
   "A run that fails the server check loses. If both fail, or the only player who started fails, it's a full refund.",
   "If no result is posted in time, either player can take a full refund from the contract.",
   "The winner receives 75% of both stakes, the amount shown before you confirm. Ties and refunds return every stake in full.",
+  "Play the AI: the Mochi team's wallet joins with the same stake and the AI plays the same map. It plays at one fixed level for everyone, worked out from the map itself, and usually scores 550–790. Duels against the AI don't count toward the weekly leaderboard.",
 ];
 
 // ---------- weekly leaderboard ----------
@@ -78,3 +79,6 @@ export const PRIZE_POOL = 1_000_000; // MOCHI each week
 export const PRIZE_SPLIT = [25, 15, 10, 8, 7, 7, 7, 7, 7, 7];
 // To win a prize: finish in profit, with at least this many wins that week
 export const PRIZE_MIN_WINS = 3;
+
+export const aiJoinMessage = (id: string | number, address: string) =>
+  `Mochi Duel\nPlay the AI in match #${id}\nWallet: ${address.toLowerCase()}`;

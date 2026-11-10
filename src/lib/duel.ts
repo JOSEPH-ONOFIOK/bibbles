@@ -5,9 +5,12 @@
 //   duel:{id}:first        startAt of whoever started first
 //   duel:{id}:result       the decided result and its signature (set once)
 //   duel:{id}:relay        lock so the result is only sent onchain once
+//
+// The house AI: a project wallet (DUEL_HOUSE_KEY) that joins a waiting duel when its creator asks,
+// with the same stake. Its moves come from the match seed (see duel/ai.ts), so they're fixed per map.
 
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { createPublicClient, createWalletClient, formatUnits, getAddress, http, type Address, type Hex } from "viem";
+import { createPublicClient, createWalletClient, formatUnits, getAddress, http, maxUint256, parseUnits, type Address, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import {
   COUNTDOWN_S,
@@ -22,12 +25,21 @@ import {
   escrowAbi,
   robinhood,
 } from "@/duel/config";
+import { aiMoves } from "@/duel/ai";
 import { SECONDS, TICKS, TPS, replay, validInputs, type Summary } from "@/duel/sim";
 import { hasDatabase, redis } from "./store";
 
 const SIGNER_KEY = process.env.DUEL_SIGNER_KEY as Hex | undefined;
 const RELAYER_KEY = process.env.DUEL_RELAYER_KEY as Hex | undefined;
 const SECRET = process.env.DUEL_SECRET || "";
+const HOUSE_KEY = process.env.DUEL_HOUSE_KEY as Hex | undefined;
+
+/** The house AI's wallet address, when the AI opponent is switched on. */
+export const house: Address | null = HOUSE_KEY ? privateKeyToAccount(HOUSE_KEY).address : null;
+export const isHouse = (a: string) => Boolean(house && a.toLowerCase() === house.toLowerCase());
+const houseIn = (m: OnchainMatch) => isHouse(m.playerA) || isHouse(m.playerB);
+// Largest stake the AI will accept, in whole MOCHI
+export const AI_MAX_STAKE = Number(process.env.DUEL_AI_MAX_STAKE || 5000);
 
 export const duelReady = () => Boolean(DUEL_CONTRACT && MOCHI_TOKEN && SIGNER_KEY && SECRET.length >= 32 && hasDatabase);
 
@@ -91,7 +103,7 @@ export const checkToken = (id: string, address: string, token: string) => {
 
 // ------------------------------------------------------------------ runs
 
-export type Run = { startAt: number; inputs: string; rejected?: string };
+export type Run = { startAt: number; inputs: string; rejected?: string; ai?: boolean };
 export type Result = {
   outcome: number;
   winner: Address | null;
@@ -131,7 +143,14 @@ export async function startRun(m: OnchainMatch, address: Address, now = Date.now
   await redis("SET", k(m.id, "first"), String(run.startAt), "NX", "EX", TTL);
   // NX: if two requests race, the first one wins and both get the same run
   const set = await redis<string | null>("SET", runKey(m.id, address), JSON.stringify(run), "NX", "EX", TTL);
-  return { run: set ? run : (await getRun(m.id, address))! };
+  const mine = set ? run : (await getRun(m.id, address))!;
+  // Against the house, the AI starts at the same moment, on the same map
+  const other = getAddress(address) === getAddress(m.playerA) ? m.playerB : m.playerA;
+  if (isHouse(other)) {
+    const ai: Run = { startAt: mine.startAt, inputs: aiMoves(seedFor(m.id)), ai: true };
+    await redis("SET", runKey(m.id, other), JSON.stringify(ai), "NX", "EX", TTL);
+  }
+  return { run: mine };
 }
 
 // Moves can't arrive faster than real time (plus a little slack for clocks and the network).
@@ -155,6 +174,14 @@ export async function addMoves(id: string, address: string, from: number, chunk:
 }
 
 export const score = (id: string, run: Run | null) => (run ? replay(seedFor(id), run.inputs) : null);
+
+/** The score so far. The AI's run is computed up front, so only the part played by now is shown. */
+export function liveScore(id: string, run: Run | null, now = Date.now()) {
+  if (!run) return null;
+  if (!run.ai) return score(id, run);
+  const ticks = Math.min(TICKS, Math.max(0, Math.floor(((now - run.startAt) / 1000) * TPS)));
+  return replay(seedFor(id), run.inputs.slice(0, ticks));
+}
 
 // ------------------------------------------------------------------ deciding
 
@@ -211,7 +238,7 @@ export const signResult = (id: string, outcome: number) =>
 export async function resolve(m: OnchainMatch, now = Date.now()): Promise<Result | null> {
   const existing = await getResult(m.id);
   if (existing) {
-    if (!existing.tx && m.status === Status.Locked) await relay(m.id, existing); // retry an earlier failed relay
+    if (!existing.tx && m.status === Status.Locked) await relay(m, existing); // retry an earlier failed relay
     return existing;
   }
   if (m.status !== Status.Locked) return null;
@@ -235,7 +262,7 @@ export async function resolve(m: OnchainMatch, now = Date.now()): Promise<Result
   const final = set ? result : (await getResult(m.id))!;
   if (set) {
     await record(m, final).catch((e) => console.error("duel leaderboard", m.id, e));
-    await relay(m.id, final);
+    await relay(m, final);
   }
   return final;
 }
@@ -251,6 +278,7 @@ export const statsKey = (week: number, address: string) => `dstats:${week}:${add
 /** Adds a decided match to the week's board. Called once per match, when its result is first signed. */
 async function record(m: OnchainMatch, r: Result) {
   if (!r.winner) return; // ties and voids refund everyone, so they don't move the board
+  if (houseIn(m)) return; // games against the AI don't count toward the weekly prizes
   const { decimals } = await readToken();
   const stake = BigInt(m.stake);
   const pot = stake * BigInt(2);
@@ -275,11 +303,14 @@ async function record(m: OnchainMatch, r: Result) {
 }
 
 /** Pays the winner without anyone needing to click, when DUEL_RELAYER_KEY is set. Players can always claim themselves. */
-async function relay(id: string, result: Result) {
-  if (!RELAYER_KEY) return;
+async function relay(m: OnchainMatch, result: Result) {
+  const id = m.id;
+  // The relayer pays out every match; without one, the house still pays out its own AI matches
+  const key = RELAYER_KEY ?? (houseIn(m) ? HOUSE_KEY : undefined);
+  if (!key) return;
   if (!(await redis<string | null>("SET", k(id, "relay"), "1", "NX", "EX", TTL))) return;
   try {
-    const wallet = createWalletClient({ account: privateKeyToAccount(RELAYER_KEY), chain: robinhood, transport: http(rpc) });
+    const wallet = createWalletClient({ account: privateKeyToAccount(key), chain: robinhood, transport: http(rpc) });
     const tx = await wallet.writeContract({
       address: DUEL_CONTRACT!,
       abi: escrowAbi,
@@ -295,3 +326,42 @@ async function relay(id: string, result: Result) {
 
 export const isPlayer = (m: OnchainMatch, address: string) =>
   getAddress(address) === getAddress(m.playerA) || getAddress(address) === getAddress(m.playerB);
+
+// ------------------------------------------------------------------ the house AI joins a duel
+
+/** Has the house AI join this open duel with the same stake. Returns an error message if it can't. */
+export async function aiJoin(m: OnchainMatch, requester: Address): Promise<{ error: string } | { tx: Hex }> {
+  if (!HOUSE_KEY || !house) return { error: "The AI opponent isn't available right now." };
+  if (m.status !== Status.Open) return { error: "This duel already has an opponent." };
+  if (getAddress(requester) !== getAddress(m.playerA)) return { error: "Only the player who made this duel can call in the AI." };
+  if (m.playerB !== "0x0000000000000000000000000000000000000000") return { error: "This duel is for an invited player only." };
+  if (Date.now() / 1000 > m.joinDeadline - 30) return { error: "This duel has expired. Cancel it to get your stake back." };
+  const { decimals } = await readToken();
+  const stake = BigInt(m.stake);
+  if (stake > parseUnits(String(AI_MAX_STAKE), decimals)) return { error: `The AI plays stakes up to ${AI_MAX_STAKE.toLocaleString()} MOCHI.` };
+
+  // One join at a time per duel
+  if (!(await redis<string | null>("SET", k(m.id, "aijoin"), "1", "NX", "EX", 120))) return { error: "The AI is already joining." };
+  try {
+    const [balance, allowance] = await Promise.all([
+      chain.readContract({ address: MOCHI_TOKEN!, abi: erc20Abi, functionName: "balanceOf", args: [house] }),
+      chain.readContract({ address: MOCHI_TOKEN!, abi: erc20Abi, functionName: "allowance", args: [house, DUEL_CONTRACT!] }),
+    ]);
+    if (balance < stake) {
+      await redis("DEL", k(m.id, "aijoin"));
+      return { error: "The AI can't cover that stake right now. Try a smaller one." };
+    }
+    const wallet = createWalletClient({ account: privateKeyToAccount(HOUSE_KEY), chain: robinhood, transport: http(rpc) });
+    if (allowance < stake) {
+      const approve = await wallet.writeContract({ address: MOCHI_TOKEN!, abi: erc20Abi, functionName: "approve", args: [DUEL_CONTRACT!, maxUint256] });
+      await chain.waitForTransactionReceipt({ hash: approve });
+    }
+    const tx = await wallet.writeContract({ address: DUEL_CONTRACT!, abi: escrowAbi, functionName: "joinMatch", args: [BigInt(m.id)] });
+    await chain.waitForTransactionReceipt({ hash: tx });
+    return { tx };
+  } catch (e) {
+    console.error("duel ai join", m.id, e);
+    await redis("DEL", k(m.id, "aijoin"));
+    return { error: "The AI couldn't join. Try again in a moment." };
+  }
+}

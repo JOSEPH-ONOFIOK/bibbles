@@ -1,6 +1,6 @@
 import { connection } from "next/server";
 import { DUEL_CONTRACT, Status, escrowAbi } from "@/duel/config";
-import { chain, readMatch, readToken, type OnchainMatch } from "@/lib/duel";
+import { AI_MAX_STAKE, chain, house, readMatch, readToken, type OnchainMatch } from "@/lib/duel";
 import { duelReady, notReady, parseAddress } from "../_shared";
 
 // GET /api/duel/lobby?address=0x…
@@ -24,7 +24,7 @@ async function load() {
   const matches = (await Promise.all(ids.map((id) => readMatch(id).catch(() => null)))).filter(Boolean) as OnchainMatch[];
   cache = {
     at: Date.now(),
-    config: { feeBps, minStake: minStake.toString(), maxStake: maxStake.toString(), ...token },
+    config: { feeBps, minStake: minStake.toString(), maxStake: maxStake.toString(), ...token, house, aiMaxStake: AI_MAX_STAKE },
     matches,
   };
   return cache;

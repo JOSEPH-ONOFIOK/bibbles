@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { decodeEventLog, formatUnits, parseUnits, type Address, type Hex } from "viem";
-import { DUEL_CONTRACT, MOCHI_TOKEN, Outcome, PONS_URL, RULES, START_WINDOW_S, Status, duelConfigured, erc20Abi, escrowAbi, robinhood, startMessage } from "@/duel/config";
+import { DUEL_CONTRACT, MOCHI_TOKEN, Outcome, aiJoinMessage, PONS_URL, RULES, START_WINDOW_S, Status, duelConfigured, erc20Abi, escrowAbi, robinhood, startMessage } from "@/duel/config";
+import { AI_LEVEL, AI_TYPICAL } from "@/duel/ai";
 import { DuelDemo } from "./DuelDemo";
 import { DuelGame } from "./DuelGame";
 import { DuelLeaderboard } from "./DuelLeaderboard";
@@ -10,12 +11,12 @@ import { useWallet, type Wallet } from "./wallet";
 
 // ------------------------------------------------------------------ types & helpers
 
-type Config = { feeBps: number; minStake: string; maxStake: string; symbol: string; decimals: number };
+type Config = { feeBps: number; minStake: string; maxStake: string; symbol: string; decimals: number; house: Address | null; aiMaxStake: number };
 type Match = { id: string; playerA: Address; playerB: Address; stake: string; feeBps: number; status: number; joinDeadline: number; settleDeadline: number };
 type Balance = { mochi: bigint; allowance: bigint; eth: bigint };
 type RunView = { started: false } | { started: true; startAt: number; deadline: number; rejected: string | null; score: number; hits: number; collected: number; ticks: number };
 type Result = { outcome: number; winner: Address | null; reason: string; signature: Hex; tx?: Hex };
-type State = { match: Match; a: RunView; b: RunView; result: Result | null; now: number };
+type State = { match: Match; a: RunView; b: RunView; ai: "a" | "b" | null; result: Result | null; now: number };
 
 const ZERO = "0x0000000000000000000000000000000000000000";
 const MAX_STAKE_MOCHI = 50_000;
@@ -278,6 +279,11 @@ function Lobby({
         <p className="font-semibold text-ink/70">
           Choose your stake. Your opponent puts in the same amount. Stakes between {fmt(min, config.decimals)} and {fmt(max, config.decimals)} {config.symbol}.
         </p>
+        {config.house && (
+          <p className="mt-1 font-bold text-ink/80">
+            🤖 Nobody around? Start a duel, then tap <span className="whitespace-nowrap">“Play the AI now”</span> (stakes up to {config.aiMaxStake.toLocaleString()} {config.symbol}). The AI usually scores {AI_TYPICAL.low}–{AI_TYPICAL.high}.
+          </p>
+        )}
         <div className="mt-4 flex flex-wrap gap-2">
           {presets.map((p) => (
             <button key={p} className={`btn px-4! py-1.5! text-lg! ${amount === p ? "btn-pink" : ""}`} onClick={() => setAmount(p)}>
@@ -628,6 +634,24 @@ function MatchRoom({ id, w, config, onBack, onChange }: { id: string; w: Wallet;
     if (runLive && !play && !finished) queueMicrotask(() => start(true));
   }, [runLive, play, finished, start]);
 
+  // The house AI joins with the same stake. The creator signs so nobody else can pull the AI in.
+  const playAi = async () => {
+    if (!w.address || !w.clients) return;
+    setErr("");
+    try {
+      setBusy("Sign to call in the AI (free, no gas)");
+      const signature = await w.clients.wallet.signMessage({ account: w.address, message: aiJoinMessage(id, w.address) });
+      setBusy("The AI is putting in its stake");
+      await getJson("/api/duel/ai", { method: "POST", body: JSON.stringify({ id, address: w.address, signature }) });
+      await load();
+      onChange();
+    } catch (e) {
+      setErr(errText(e));
+    } finally {
+      setBusy("");
+    }
+  };
+
   const tx = async (label: string, fn: () => Promise<Hex>) => {
     setErr("");
     setBusy(label);
@@ -674,8 +698,8 @@ function MatchRoom({ id, w, config, onBack, onChange }: { id: string; w: Wallet;
               </span>
             </div>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              <Player label="Player A" address={m!.playerA} me={me === "a"} run={state.a} />
-              <Player label="Player B" address={m!.playerB} me={me === "b"} run={state.b} />
+              <Player label="Player A" address={m!.playerA} me={me === "a"} ai={state.ai === "a"} run={state.a} />
+              <Player label="Player B" address={m!.playerB} me={me === "b"} ai={state.ai === "b"} run={state.b} />
             </div>
           </Card>
 
@@ -687,6 +711,7 @@ function MatchRoom({ id, w, config, onBack, onChange }: { id: string; w: Wallet;
               resume={play.resume}
               upload={upload}
               opponent={oppRun && oppRun.started ? { started: true, score: oppRun.score } : { started: false }}
+              opponentName={state.ai && state.ai !== me ? "🤖 AI" : "Opponent"}
               onFinished={() => {
                 setFinished(true);
                 load();
@@ -710,6 +735,15 @@ function MatchRoom({ id, w, config, onBack, onChange }: { id: string; w: Wallet;
                     >
                       {copied ? "Copied!" : "Copy invite link"}
                     </button>
+                    {me === "a" &&
+                      config.house &&
+                      m!.playerB === ZERO &&
+                      now < m!.joinDeadline - 30 &&
+                      BigInt(m!.stake) <= parseUnits(String(config.aiMaxStake), config.decimals) && (
+                        <button className="btn btn-pink px-4! py-1.5! text-lg!" disabled={Boolean(busy)} onClick={playAi}>
+                          🤖 Play the AI now
+                        </button>
+                      )}
                     {(me === "a" || now > m!.joinDeadline) && (
                       <button
                         className="btn px-4! py-1.5! text-lg!"
@@ -819,14 +853,14 @@ function MatchRoom({ id, w, config, onBack, onChange }: { id: string; w: Wallet;
   );
 }
 
-function Player({ label, address, me, run }: { label: string; address: string; me: boolean; run: RunView }) {
+function Player({ label, address, me, ai, run }: { label: string; address: string; me: boolean; ai: boolean; run: RunView }) {
   return (
     <div className={`rounded-2xl border-[3px] border-ink px-4 py-3 ${me ? "bg-[#fff1a8]" : "bg-white"}`}>
       <p className="text-xs font-extrabold uppercase tracking-wide text-ink/60">
         {label}
         {me && " · you"}
       </p>
-      <p className="font-bold">{address === ZERO ? "Waiting…" : short(address)}</p>
+      <p className="font-bold">{address === ZERO ? "Waiting…" : ai ? `🤖 Mochi AI (${AI_LEVEL})` : short(address)}</p>
       {run.started ? (
         <p className="font-display text-2xl">
           {run.score} <span className="text-base text-ink/60">pts · {run.hits} hits{run.rejected ? " · rejected" : ""}</span>

@@ -1,6 +1,6 @@
 import { connection } from "next/server";
 import { bad } from "@/lib/api";
-import { getRun, readMatch, resolve, runDeadline, score } from "@/lib/duel";
+import { getRun, isHouse, liveScore, readMatch, resolve, runDeadline } from "@/lib/duel";
 import { duelReady, notReady, parseId } from "../_shared";
 
 // GET /api/duel/state?id=1 → the match onchain, each player's live verified score, and the result once decided.
@@ -15,9 +15,10 @@ export async function GET(req: Request) {
     if (!m) return bad("Match not found.", 404);
     const [a, b] = await Promise.all([getRun(m.id, m.playerA), getRun(m.id, m.playerB)]);
     const view = (r: typeof a) =>
-      r ? { started: true, startAt: r.startAt, deadline: runDeadline(r), rejected: r.rejected ?? null, ...score(m.id, r)! } : { started: false };
+      r ? { started: true, startAt: r.startAt, deadline: runDeadline(r), rejected: r.rejected ?? null, ...liveScore(m.id, r)! } : { started: false };
     const result = await resolve(m);
-    return Response.json({ match: m, a: view(a), b: view(b), result, now: Date.now() }, { headers: { "Cache-Control": "no-store" } });
+    const ai = isHouse(m.playerA) ? "a" : isHouse(m.playerB) ? "b" : null;
+    return Response.json({ match: m, a: view(a), b: view(b), ai, result, now: Date.now() }, { headers: { "Cache-Control": "no-store" } });
   } catch (e) {
     console.error("duel state", e);
     return Response.json({ error: "Couldn't reach Robinhood Chain. Try again in a moment." }, { status: 502 });

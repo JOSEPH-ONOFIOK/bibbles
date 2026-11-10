@@ -1,0 +1,259 @@
+// Server only: Mochi Duel runs, scoring and signed results.
+//
+// Redis keys (per match id):
+//   duel:{id}:p:{address}  the player's run: { startAt, inputs, rejected? }
+//   duel:{id}:first        startAt of whoever started first
+//   duel:{id}:result       the decided result and its signature (set once)
+//   duel:{id}:relay        lock so the result is only sent onchain once
+
+import { createHmac, timingSafeEqual } from "node:crypto";
+import { createPublicClient, createWalletClient, getAddress, http, type Address, type Hex } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import {
+  COUNTDOWN_S,
+  DUEL_CONTRACT,
+  MOCHI_TOKEN,
+  Outcome,
+  START_WINDOW_S,
+  Status,
+  UPLOAD_GRACE_S,
+  erc20Abi,
+  escrowAbi,
+  robinhood,
+} from "@/duel/config";
+import { SECONDS, TICKS, TPS, replay, validInputs, type Summary } from "@/duel/sim";
+import { hasDatabase, redis } from "./store";
+
+const SIGNER_KEY = process.env.DUEL_SIGNER_KEY as Hex | undefined;
+const RELAYER_KEY = process.env.DUEL_RELAYER_KEY as Hex | undefined;
+const SECRET = process.env.DUEL_SECRET || "";
+
+export const duelReady = () => Boolean(DUEL_CONTRACT && MOCHI_TOKEN && SIGNER_KEY && SECRET.length >= 32 && hasDatabase);
+
+const rpc = process.env.ROBINHOOD_RPC_URL || robinhood.rpcUrls.default.http[0];
+export const chain = createPublicClient({ chain: robinhood, transport: http(rpc, { timeout: 8000, retryCount: 1 }) });
+
+// ------------------------------------------------------------------ chain reads
+
+export type OnchainMatch = {
+  id: string;
+  playerA: Address;
+  playerB: Address;
+  stake: string;
+  feeBps: number;
+  status: number;
+  joinDeadline: number;
+  settleDeadline: number;
+};
+
+export async function readMatch(id: bigint): Promise<OnchainMatch | null> {
+  const m = await chain.readContract({ address: DUEL_CONTRACT!, abi: escrowAbi, functionName: "getMatch", args: [id] });
+  if (m.status === Status.None) return null;
+  return {
+    id: id.toString(),
+    playerA: m.playerA,
+    playerB: m.playerB,
+    stake: m.stake.toString(),
+    feeBps: m.feeBps,
+    status: m.status,
+    joinDeadline: Number(m.joinDeadline),
+    settleDeadline: Number(m.settleDeadline),
+  };
+}
+
+let tokenInfo: { symbol: string; decimals: number } | undefined;
+export async function readToken() {
+  if (!tokenInfo) {
+    const [symbol, decimals] = await Promise.all([
+      chain.readContract({ address: MOCHI_TOKEN!, abi: erc20Abi, functionName: "symbol" }),
+      chain.readContract({ address: MOCHI_TOKEN!, abi: erc20Abi, functionName: "decimals" }),
+    ]);
+    tokenInfo = { symbol, decimals };
+  }
+  return tokenInfo;
+}
+
+// ------------------------------------------------------------------ secrets
+
+const hmac = (msg: string) => createHmac("sha256", SECRET).update(msg).digest();
+
+/** The map seed. Both players get the same one, and nobody can work it out ahead of time. */
+export const seedFor = (id: string) => hmac(`seed:${id}`).readUInt32BE(0);
+
+/** Proves the caller signed in with this wallet for this match. */
+export const tokenFor = (id: string, address: string) => hmac(`play:${id}:${address.toLowerCase()}`).toString("hex");
+export const checkToken = (id: string, address: string, token: string) => {
+  const want = Buffer.from(tokenFor(id, address), "hex");
+  const got = Buffer.from(String(token), "hex");
+  return got.length === want.length && timingSafeEqual(got, want);
+};
+
+// ------------------------------------------------------------------ runs
+
+export type Run = { startAt: number; inputs: string; rejected?: string };
+export type Result = {
+  outcome: number;
+  winner: Address | null;
+  reason: string;
+  signature: Hex;
+  a: Summary | null;
+  b: Summary | null;
+  decidedAt: number;
+  tx?: Hex;
+};
+
+const k = (id: string, rest: string) => `duel:${id}:${rest}`;
+const runKey = (id: string, address: string) => k(id, `p:${address.toLowerCase()}`);
+const TTL = 60 * 60 * 24 * 14;
+
+export async function getRun(id: string, address: string) {
+  const raw = await redis<string | null>("GET", runKey(id, address));
+  return raw ? (JSON.parse(raw) as Run) : null;
+}
+const putRun = (id: string, address: string, run: Run) => redis("SET", runKey(id, address), JSON.stringify(run), "EX", TTL);
+
+export async function getResult(id: string) {
+  const raw = await redis<string | null>("GET", k(id, "result"));
+  return raw ? (JSON.parse(raw) as Result) : null;
+}
+
+export const runDeadline = (run: Run) => run.startAt + (SECONDS + UPLOAD_GRACE_S) * 1000;
+const runDone = (run: Run, now: number) => Boolean(run.rejected) || run.inputs.length >= TICKS || now > runDeadline(run);
+
+/** Begin (or resume) a player's run. */
+export async function startRun(m: OnchainMatch, address: Address, now = Date.now()) {
+  const existing = await getRun(m.id, address);
+  if (existing) return { run: existing };
+  const first = await redis<string | null>("GET", k(m.id, "first"));
+  if (first && now > Number(first) + START_WINDOW_S * 1000) return { error: "Too late: you didn't start within 60 seconds of your opponent." };
+  const run: Run = { startAt: now + COUNTDOWN_S * 1000, inputs: "" };
+  await redis("SET", k(m.id, "first"), String(run.startAt), "NX", "EX", TTL);
+  // NX: if two requests race, the first one wins and both get the same run
+  const set = await redis<string | null>("SET", runKey(m.id, address), JSON.stringify(run), "NX", "EX", TTL);
+  return { run: set ? run : (await getRun(m.id, address))! };
+}
+
+// Moves can't arrive faster than real time (plus a little slack for clocks and the network).
+const SLACK_TICKS = TPS * 2;
+
+/** Add a chunk of moves to a run. Append only; `from` must match what we already have. */
+export async function addMoves(id: string, address: string, from: number, chunk: string, now = Date.now()) {
+  const run = await getRun(id, address);
+  if (!run) return { error: "Run not started." };
+  if (run.rejected || run.inputs.length >= TICKS || now > runDeadline(run)) return { run };
+  if (from !== run.inputs.length) return { run }; // out of step: the client resends from run.inputs.length
+  if (!validInputs(run.inputs + chunk)) {
+    run.rejected = "Invalid moves";
+  } else {
+    const allowed = Math.floor(((now - run.startAt) / 1000) * TPS) + SLACK_TICKS;
+    if (run.inputs.length + chunk.length > allowed) run.rejected = "Moves arrived faster than real time";
+    else run.inputs += chunk;
+  }
+  await putRun(id, address, run);
+  return { run };
+}
+
+export const score = (id: string, run: Run | null) => (run ? replay(seedFor(id), run.inputs) : null);
+
+// ------------------------------------------------------------------ deciding
+
+type Decision = { outcome: number; reason: string };
+
+/** The published rules, in code. Returns null while the match is still being played. */
+export function decide(m: OnchainMatch, a: Run | null, b: Run | null, now: number): Decision | null {
+  const id = m.id;
+  if (!a && !b) return null; // nobody started; the onchain refund covers it if nobody ever does
+
+  if (!a || !b) {
+    const started = (a ?? b)!;
+    if (now <= started.startAt + START_WINDOW_S * 1000) return null;
+    if (started.rejected) return { outcome: Outcome.Void, reason: "The only run failed the server check" };
+    return a
+      ? { outcome: Outcome.PlayerAWins, reason: "Player B didn't start within 60 seconds" }
+      : { outcome: Outcome.PlayerBWins, reason: "Player A didn't start within 60 seconds" };
+  }
+
+  if (!runDone(a, now) || !runDone(b, now)) return null;
+
+  if (a.rejected && b.rejected) return { outcome: Outcome.Void, reason: "Both runs failed the server check" };
+  if (a.rejected) return { outcome: Outcome.PlayerBWins, reason: `Player A's run failed the server check (${a.rejected})` };
+  if (b.rejected) return { outcome: Outcome.PlayerAWins, reason: `Player B's run failed the server check (${b.rejected})` };
+
+  if (a.inputs.length < TICKS && b.inputs.length < TICKS) return { outcome: Outcome.Void, reason: "Both players disconnected" };
+
+  const sa = score(id, a)!;
+  const sb = score(id, b)!;
+  if (sa.score !== sb.score) {
+    return sa.score > sb.score
+      ? { outcome: Outcome.PlayerAWins, reason: "Higher score" }
+      : { outcome: Outcome.PlayerBWins, reason: "Higher score" };
+  }
+  if (sa.hits !== sb.hits) {
+    return sa.hits < sb.hits
+      ? { outcome: Outcome.PlayerAWins, reason: "Same score, fewer hits" }
+      : { outcome: Outcome.PlayerBWins, reason: "Same score, fewer hits" };
+  }
+  return { outcome: Outcome.Void, reason: "Tie: same score and same hits" };
+}
+
+const signer = () => privateKeyToAccount(SIGNER_KEY!);
+
+export const signResult = (id: string, outcome: number) =>
+  signer().signTypedData({
+    domain: { name: "MochiDuelEscrow", version: "1", chainId: robinhood.id, verifyingContract: DUEL_CONTRACT! },
+    types: { Result: [{ name: "matchId", type: "uint256" }, { name: "outcome", type: "uint8" }] },
+    primaryType: "Result",
+    message: { matchId: BigInt(id), outcome },
+  });
+
+/** Decide the match if it's over, sign the result once, and (with a relayer key) pay it out onchain. */
+export async function resolve(m: OnchainMatch, now = Date.now()): Promise<Result | null> {
+  const existing = await getResult(m.id);
+  if (existing) {
+    if (!existing.tx && m.status === Status.Locked) await relay(m.id, existing); // retry an earlier failed relay
+    return existing;
+  }
+  if (m.status !== Status.Locked) return null;
+  // Past the settle deadline the contract only allows refunds, so don't sign anything.
+  if (now / 1000 > m.settleDeadline) return null;
+
+  const [a, b] = await Promise.all([getRun(m.id, m.playerA), getRun(m.id, m.playerB)]);
+  const d = decide(m, a, b, now);
+  if (!d) return null;
+
+  const result: Result = {
+    outcome: d.outcome,
+    winner: d.outcome === Outcome.PlayerAWins ? m.playerA : d.outcome === Outcome.PlayerBWins ? m.playerB : null,
+    reason: d.reason,
+    signature: await signResult(m.id, d.outcome),
+    a: score(m.id, a),
+    b: score(m.id, b),
+    decidedAt: now,
+  };
+  const set = await redis<string | null>("SET", k(m.id, "result"), JSON.stringify(result), "NX", "EX", TTL);
+  const final = set ? result : (await getResult(m.id))!;
+  if (set) await relay(m.id, final);
+  return final;
+}
+
+/** Pays the winner without anyone needing to click, when DUEL_RELAYER_KEY is set. Players can always claim themselves. */
+async function relay(id: string, result: Result) {
+  if (!RELAYER_KEY) return;
+  if (!(await redis<string | null>("SET", k(id, "relay"), "1", "NX", "EX", TTL))) return;
+  try {
+    const wallet = createWalletClient({ account: privateKeyToAccount(RELAYER_KEY), chain: robinhood, transport: http(rpc) });
+    const tx = await wallet.writeContract({
+      address: DUEL_CONTRACT!,
+      abi: escrowAbi,
+      functionName: "settle",
+      args: [BigInt(id), result.outcome, result.signature],
+    });
+    await redis("SET", k(id, "result"), JSON.stringify({ ...result, tx }), "EX", TTL);
+  } catch (e) {
+    console.error("duel relay failed", id, e);
+    await redis("DEL", k(id, "relay")); // let a later call try again; players can also claim
+  }
+}
+
+export const isPlayer = (m: OnchainMatch, address: string) =>
+  getAddress(address) === getAddress(m.playerA) || getAddress(address) === getAddress(m.playerB);

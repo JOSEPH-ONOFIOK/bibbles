@@ -1,6 +1,6 @@
 import { connection } from "next/server";
 import { bad } from "@/lib/api";
-import { GAME_OPEN } from "@/game/data";
+import { gameOpen } from "@/game/data";
 import { getSession } from "@/lib/auth";
 import { hasDatabase, redis, store } from "@/lib/store";
 
@@ -15,7 +15,7 @@ const key = (h: string) => `game:${h.toLowerCase()}`;
 
 export async function GET() {
   await connection();
-  if (!GAME_OPEN) return bad("The game isn't open yet.", 404);
+  if (!gameOpen()) return bad("The game isn't open yet.", 404);
   const s = await getSession();
   if (!s) return bad("Sign in with X to save your game online.", 401);
   if (!hasDatabase) return Response.json({ save: null });
@@ -24,7 +24,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  if (!GAME_OPEN) return bad("The game isn't open yet.", 404);
+  if (!gameOpen()) return bad("The game isn't open yet.", 404);
   const s = await getSession();
   if (!s) return bad("Sign in with X to save your game online.", 401);
   if (!hasDatabase) return Response.json({ ok: true });

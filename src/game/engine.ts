@@ -57,6 +57,11 @@ type Target =
   | { kind: "water"; x: number; y: number };
 
 type Fishing = { phase: "wait" | "bite"; t: number; x: number; y: number; biteAt: number };
+export type Fx =
+  | { type: "float"; x: number; y: number; text: string }
+  | { type: "emit"; x: number; y: number; n: number; color: string; speed: number; size: number }
+  | { type: "shake"; strength: number };
+
 type Particle = { x: number; y: number; vx: number; vy: number; life: number; max: number; color: string; size: number };
 type Float = { x: number; y: number; text: string; life: number };
 
@@ -98,6 +103,9 @@ export class Engine {
 
   // Demo mode: the Mochi plays by itself (site backgrounds, the start screen). Silent, saves nothing.
   private demo = false;
+  // External: something else (the Phaser view) runs the clock and does the drawing
+  private external = false;
+  fx: ((e: Fx) => void) | null = null;
   // Where on screen the camera keeps your Mochi (0.5, 0.5 = the middle)
   focus = { x: 0.5, y: 0.5 };
   private auto = { target: null as Thing | null, until: 0, swingAt: 0, lastX: 0, lastY: 0, still: 0 };
@@ -109,9 +117,10 @@ export class Engine {
   constructor(
     private canvas: HTMLCanvasElement,
     private host: Host,
-    opts: { demo?: boolean; focus?: { x: number; y: number }; at?: [number, number]; region?: number } = {},
+    opts: { demo?: boolean; focus?: { x: number; y: number }; at?: [number, number]; region?: number; external?: boolean } = {},
   ) {
     this.demo = !!opts.demo;
+    this.external = !!opts.external;
     if (opts.focus) this.focus = opts.focus;
     // Start somewhere else: a Frontier world, or a spot in tiles
     if (opts.region) this.world = buildRegion(opts.region);
@@ -137,8 +146,9 @@ export class Engine {
   start() {
     addEventListener("keydown", this.onKey);
     addEventListener("keyup", this.onKey);
-    addEventListener("resize", this.resize);
     addEventListener("blur", this.onBlur);
+    if (this.external) return;
+    addEventListener("resize", this.resize);
     this.resize();
     this.last = performance.now();
     this.raf = requestAnimationFrame(this.loop);
@@ -204,6 +214,12 @@ export class Engine {
   };
 
   // ---------- the loop ----------
+  // For the Phaser view: advance the world by dt seconds
+  tick(dt: number) {
+    this.time += Math.min(0.05, dt);
+    this.update(Math.min(0.05, dt), Date.now());
+  }
+
   private loop = (now: number) => {
     const dt = Math.min(0.05, (now - this.last) / 1000);
     this.last = now;
@@ -616,6 +632,7 @@ export class Engine {
             n.regrowAt = Date.now() + spec.regrow * 1000;
             this.dropText(n.x, n.y - 40, gain);
             this.burst(n.x, n.y - 20, n.node);
+            this.fx?.({ type: "shake", strength: n.node === "tree" || n.node === "rock" ? 0.006 : 0.003 });
             // Sometimes a broken cave rock reveals a ladder down
             if (n.zone === "cave" && !this.world.things.some((x) => x.kind === "ladder") && Math.random() < 0.25) {
               this.world.things.push({ id: this.nextId++, kind: "ladder", x: n.x, y: n.y });
@@ -761,6 +778,7 @@ export class Engine {
 
   // ---------- effects ----------
   private float(x: number, y: number, text: string) {
+    if (this.fx) return this.fx({ type: "float", x, y, text });
     this.floats.push({ x, y, text, life: 1.4 });
   }
 
@@ -770,6 +788,7 @@ export class Engine {
   }
 
   private emit(x: number, y: number, n: number, color: string, speed = 160, size = 4) {
+    if (this.fx) return this.fx({ type: "emit", x, y, n, color, speed, size });
     for (let i = 0; i < n; i++) {
       const a = Math.random() * Math.PI * 2;
       const s = speed * (0.4 + Math.random());
@@ -1684,6 +1703,164 @@ export class Engine {
     g.fillText(key, x - w / 2 + 14, by + 3);
     g.fillStyle = INK;
     g.fillText(text, x + 10, by + 3);
+  }
+
+  // ---------- read-only views for the Phaser renderer ----------
+  view() {
+    return {
+      world: this.world,
+      player: this.player,
+      time: this.time,
+      target: this.target,
+      prompt: this.lastPrompt,
+      fishing: this.fishing,
+      zone: this.lastZone,
+      floor: this.floor,
+      demo: this.demo,
+      img: this.img,
+      ground: this.ground,
+      focus: this.focus,
+      zoomFor: (cssWidth: number) => Math.max(1.05, Math.min(1.8, cssWidth / (TILE * 15))),
+    };
+  }
+
+  // Where the action prompt floats, matching the canvas renderer
+  promptAt(): { x: number; y: number; label: string } | null {
+    const t = this.target;
+    const label = this.lastPrompt;
+    if (!t || !label || this.demo) return null;
+    if (t.kind === "water") return { x: t.x, y: t.y - 34, label };
+    if (t.kind === "door") return { x: t.t.x, y: t.t.y + 52, label };
+    if (t.kind === "gate") return { x: this.player.x, y: this.player.y - 80, label };
+    const y = t.t.y - (t.kind === "node" && t.t.node === "tree" ? 100 : t.kind === "villager" ? 70 : 54);
+    return { x: t.t.x, y, label };
+  }
+
+  toolIcon() {
+    const t = this.target;
+    return t?.kind === "node" ? (t.t.node === "tree" ? "🪓" : t.t.node === "rock" || t.t.node === "crystal" ? "⛏️" : "✋") : "🎣";
+  }
+
+  isShaking(id: number) {
+    return (this.shake.get(id) ?? 0) > this.time;
+  }
+
+  // Today's sky where you are, and how dark it is
+  weatherNow(): "sun" | "rain" | "snow" {
+    if (this.lastZone === "cave") return "sun";
+    const b = this.world.biome;
+    return b ? (b.id === "frost" ? "snow" : b.id === "coral" || b.id === "grove" ? weather() : "sun") : weather();
+  }
+
+  lighting(): { alpha: number; color: number; spot: boolean } {
+    const night = this.world.biome?.id === "star" || this.world.biome?.id === "grove";
+    if (this.lastZone === "cave") return { alpha: Math.min(0.9, 0.62 + this.floor * 0.04), color: 0x140a28, spot: true };
+    if (night) return { alpha: 0.55, color: 0x0f0a2d, spot: true };
+    const d = new Date();
+    const h = d.getHours() + d.getMinutes() / 60;
+    if (h >= 17 && h < 19) return { alpha: ((h - 17) / 2) * 0.18, color: 0xff8c3c, spot: false };
+    if (h >= 19 && h < 21) return { alpha: 0.18 + ((h - 19) / 2) * 0.3, color: 0x141946, spot: true };
+    if (h >= 21 || h < 5) return { alpha: 0.48, color: 0x141946, spot: true };
+    if (h >= 5 && h < 7) return { alpha: 0.48 * (1 - (h - 5) / 2), color: 0x141946, spot: true };
+    return { alpha: 0, color: 0, spot: false };
+  }
+
+  // A thing drawn once into its own little canvas, for the renderer to use as a sprite.
+  // key changes whenever the thing looks different (regrown, built, opened, a new hit…).
+  sprite(t: Thing, now: number): { key: string; w: number; h: number; ox: number; oy: number; depth: number; canvas: () => HTMLCanvasElement } {
+    const bio = this.world.biome?.id ?? this.season;
+    let key = "";
+    let w = 120;
+    let h = 150;
+    let ox = 60;
+    let oy = 120;
+    let depth = t.y;
+    let paint = () => {};
+    switch (t.kind) {
+      case "node": {
+        const gone = t.regrowAt > now ? 1 : 0;
+        const v = t.node === "flower" ? Math.floor(hash(t.id * 3) * 5) : Math.floor(hash(t.id) * 10);
+        key = `n:${t.node}:${bio}:${v}:${gone}:${t.hits}`;
+        paint = () => this.drawNode(t, 0);
+        break;
+      }
+      case "house":
+        [key, w, h, ox, oy, depth] = ["house", 240, 240, 120, 150, t.y + t.h / 2];
+        paint = () => this.drawHouse(t);
+        break;
+      case "site": {
+        const built = this.host.built(t.project);
+        [key, w, h, ox, oy, depth] = [`site:${t.project}:${built}`, 200, 190, 100, 110, t.y + t.h / 2];
+        paint = () => this.drawSite(t);
+        break;
+      }
+      case "bench":
+        [key, w, h, ox, oy] = ["bench", 90, 80, 45, 55];
+        paint = () => this.drawBench(t);
+        break;
+      case "bin":
+        [key, w, h, ox, oy] = ["bin", 90, 80, 45, 55];
+        paint = () => this.drawBin(t.x, t.y);
+        break;
+      case "ladder":
+        [key, w, h, ox, oy, depth] = ["ladder", 80, 80, 40, 50, t.y - 20];
+        paint = () => this.drawLadder(t.x, t.y);
+        break;
+      case "sign":
+        [key, w, h, ox, oy] = [`sign:${t.text}`, 240, 60, 120, 40];
+        paint = () => this.drawSign(t.x, t.y, t.text);
+        break;
+      case "plot": {
+        const p = this.host.plot(t.i);
+        [key, w, h, ox, oy, depth] = [`plot:${p.stage}:${p.crop ?? ""}`, 70, 70, 35, 40, t.y - 30];
+        paint = () => this.drawPlot(t);
+        break;
+      }
+      case "fence":
+        [key, w, h, ox, oy, depth] = [`fence:${t.vertical}`, 80, 90, 16, 40, t.vertical ? t.y + t.h : t.y];
+        paint = () => this.drawFence(t.x, t.y, t.w, t.h, t.vertical, false);
+        break;
+      case "gate": {
+        const open = this.host.zoneOpen(t.zone);
+        [key, w, h, ox, oy, depth] = [`gate:${t.vertical}:${open}:${t.zone}`, 150, 140, 30, 70, t.vertical ? t.y + t.h : t.y];
+        paint = () => this.drawGate(t);
+        break;
+      }
+      case "trail": {
+        const open = t.back || t.to <= this.host.carved();
+        [key, w, h, ox, oy] = [`trail:${t.to}:${t.back}:${open}`, 240, 150, 120, 115];
+        paint = () => this.drawTrail(t);
+        break;
+      }
+      case "villager": {
+        const ask = this.host.hasRequest(t.v);
+        [key, w, h, ox, oy] = [`v:${t.v}:${ask}`, 70, 100, 35, 75];
+        paint = () => this.drawVillager(t);
+        break;
+      }
+      case "critter":
+        [key, w, h, ox, oy, depth] = [`c:${t.icon}`, 44, 44, 22, 30, t.flies ? t.y + 40 : t.y];
+        paint = () => this.drawCritter({ ...t, tx: t.x, ty: t.y, wait: 1, flies: false });
+        break;
+    }
+    const canvas = () => {
+      const c = document.createElement("canvas");
+      c.width = w;
+      c.height = h;
+      const g = c.getContext("2d")!;
+      g.translate(ox - t.x, oy - t.y);
+      const [ctx, time] = [this.ctx, this.time];
+      this.ctx = g;
+      this.time = 0;
+      try {
+        paint();
+      } finally {
+        this.ctx = ctx;
+        this.time = time;
+      }
+      return c;
+    };
+    return { key, w, h, ox, oy, depth, canvas };
   }
 
   zoneName(id: string) {

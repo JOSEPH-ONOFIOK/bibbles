@@ -1,7 +1,8 @@
-import { BIOMES, CROPS, MATS, PROJECTS, SEASONS, TRIAL_BADGES, VILLAGERS, ZONES, type Mat } from "@/game/data";
+import { GAME_OPEN_AT, BIOMES, CROPS, MATS, PROJECTS, SEASONS, TRIAL_BADGES, VILLAGERS, ZONES, type Mat } from "@/game/data";
 import { FEATURED, TOKEN, X_HANDLE, X_URL } from "@/lib/mochi";
 import { PeekMochi } from "../PeekMochi";
 import { GameBackdrop } from "./GameBackdrop";
+import { Countdown } from "../Countdown";
 
 // The game's preview and docs, shown while it's closed. The lists read from the
 // game's own data, so this page stays in step with the game.
@@ -108,8 +109,9 @@ export function GamePreview() {
             </h1>
             <div className="mt-3 flex items-center justify-center gap-2">
               <span className="rounded-full border-[3px] border-ink bg-white px-3 py-0.5 font-display">V1</span>
-              <span className="rounded-full border-[3px] border-ink bg-[#fff1a8] px-3 py-0.5 font-display shadow-[3px_3px_0_#161616]">Coming soon</span>
+              <span className="rounded-full border-[3px] border-ink bg-[#fff1a8] px-3 py-0.5 font-display shadow-[3px_3px_0_#161616]">Opens today 4pm WAT</span>
             </div>
+            <Countdown className="mt-4" to={GAME_OPEN_AT} label="🎮 Opens in" done="Open now!" />
             <p className="mt-4 font-display text-2xl">Play to earn? Yes.</p>
             <p className="mt-2 font-semibold">A cosy adventure as your own Mochi: gather, farm, build the village, make friends and explore new worlds.</p>
             <div className="mt-5 flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
@@ -338,7 +340,8 @@ export function GamePreview() {
           ))}
         </div>
         <div className="mt-10 text-center">
-          <p className="font-display text-4xl">Mochi Game V1 is coming soon 🩷</p>
+          <p className="font-display text-4xl">Mochi Game V1 opens today 🩷</p>
+          <Countdown className="mt-4" to={GAME_OPEN_AT} label="🎮 Opens in" done="Open now!" />
           <a href={X_URL} target="_blank" rel="noreferrer" className="btn btn-pink mt-4 px-8! py-3! text-xl!">
             Follow {X_HANDLE}
           </a>

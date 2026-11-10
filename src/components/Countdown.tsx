@@ -1,29 +1,45 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { GAME_OPEN_AT } from "@/game/data";
 import { APPLY_END } from "@/lib/deadline";
 
-// True until the deadline, then flips to false on its own
-export function useApplyOpen() {
-  const [open, setOpen] = useState(true);
+// False until the moment `at` arrives, then flips to true on its own
+export function useReached(at: number) {
+  const [reached, setReached] = useState(false);
   useEffect(() => {
-    const left = APPLY_END - Date.now();
+    const left = at - Date.now();
     if (left <= 0) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- already past the deadline when the page opened
-      setOpen(false);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- already past it when the page opened
+      setReached(true);
       return;
     }
-    // Timers can't wait longer than about 24 days; the deadline is far sooner
-    const t = setTimeout(() => setOpen(false), Math.min(left, 2 ** 31 - 1));
+    // Timers can't wait longer than about 24 days
+    const t = setTimeout(() => setReached(true), Math.min(left, 2 ** 31 - 1));
     return () => clearTimeout(t);
-  }, []);
-  return open;
+  }, [at]);
+  return reached;
+}
+
+// True until the application deadline
+export function useApplyOpen() {
+  return !useReached(APPLY_END);
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-// "Applications close in 17 : 59 : 59", then "Applications closed"
-export function Countdown({ className = "" }: { className?: string }) {
+// "Applications close in 17 : 59 : 59", then "Applications closed" (or any other moment and labels)
+export function Countdown({
+  className = "",
+  to = APPLY_END,
+  label = "⏳ Applications close in",
+  done = "Applications closed",
+}: {
+  className?: string;
+  to?: number;
+  label?: string;
+  done?: string;
+}) {
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- the clock only exists in the browser
@@ -31,7 +47,7 @@ export function Countdown({ className = "" }: { className?: string }) {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
-  const left = now === null ? null : Math.max(0, APPLY_END - now);
+  const left = now === null ? null : Math.max(0, to - now);
   const closed = left === 0;
   const h = left === null ? 0 : Math.floor(left / 3_600_000);
   const m = left === null ? 0 : Math.floor((left % 3_600_000) / 60_000);
@@ -39,10 +55,10 @@ export function Countdown({ className = "" }: { className?: string }) {
   return (
     <div className={`inline-flex flex-wrap items-center justify-center gap-2 ${className}`} role="timer" aria-live="off">
       {closed ? (
-        <p className="rounded-full border-4 border-ink bg-ink px-5 py-2 font-display text-2xl text-white shadow-[4px_4px_0_#161616]">Applications closed</p>
+        <p className="rounded-full border-4 border-ink bg-ink px-5 py-2 font-display text-2xl text-white shadow-[4px_4px_0_#161616]">{done}</p>
       ) : (
         <>
-          <p className="font-display text-xl">⏳ Applications close in</p>
+          <p className="font-display text-xl">{label}</p>
           <div className="flex items-center gap-1 font-display tabular-nums">
             {[
               [h, "hrs"],
@@ -72,4 +88,10 @@ export function ClosedCard({ handle }: { handle: string }) {
       <p className="mt-2 font-bold text-white/80">Thank you to everyone who joined. If you finished in time, your spot is saved. Follow {handle} for what&apos;s next.</p>
     </div>
   );
+}
+
+// True once the game has opened (at its launch time, or early via NEXT_PUBLIC_GAME_OPEN=1)
+export function useGameOpen() {
+  const reached = useReached(GAME_OPEN_AT);
+  return reached || process.env.NEXT_PUBLIC_GAME_OPEN === "1";
 }

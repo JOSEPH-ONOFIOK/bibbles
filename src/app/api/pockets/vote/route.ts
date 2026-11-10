@@ -1,11 +1,11 @@
 import { bad } from "@/lib/api";
 import { getSession } from "@/lib/auth";
-import { GAME_OPEN, calendar } from "@/game/data";
+import { calendar, gameOpen } from "@/game/data";
 import { hasDatabase, redis, store } from "@/lib/store";
 
 // POST { h } → one vote a week for Pocket of the week, never for your own
 export async function POST(req: Request) {
-  if (!GAME_OPEN) return bad("The game isn't open yet.", 404);
+  if (!gameOpen()) return bad("The game isn't open yet.", 404);
   const s = await getSession();
   if (!s) return bad("Connect your X to vote.", 401);
   if (!hasDatabase) return bad("Voting isn't open yet.", 503);

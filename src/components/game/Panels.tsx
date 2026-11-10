@@ -82,7 +82,7 @@ export function Craft({ save, now, act }: { save: Save; now: number; act: (a: Ac
     <div>
       <Card className="bg-[#fff1a8]!">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="font-display text-2xl">🔨 Workbench</p>
+          <p className="font-display text-xl">Crafting slots</p>
           <SoonMochi>More crafting slots with {TOKEN} soon</SoonMochi>
         </div>
         <div className="mt-3 grid gap-2 sm:grid-cols-2">

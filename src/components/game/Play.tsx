@@ -3,16 +3,29 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AURAS, FACES, MochiArt, SKINS, type MochiLook } from "@/components/MochiArt";
-import { ENERGY_MAX, GAME_OPEN, MATS, MOCHI_SOON, PLOTS_FREE, QUESTS, SEASONS, TRIAL_SECONDS, ZONES, biomeFor, calendar, frontierName, trialFor, weather, xpFor, type Mat } from "@/game/data";
+import { ENERGY_MAX, GAME_OPEN_AT, MATS, MOCHI_SOON, PLOTS_FREE, QUESTS, SEASONS, TRIAL_SECONDS, ZONES, biomeFor, calendar, frontierName, trialFor, weather, xpFor, type Mat } from "@/game/data";
 import { isMuted, play, setMuted } from "@/game/sfx";
 import { Engine, type Host, type Menu as WorldMenu } from "@/game/engine";
 import { apply, built, load, nextEnergyIn, plotState, residents, store, upgrade, zoneOpen, type Action, type Gain, type Save } from "@/game/state";
 import { TOKEN, X_HANDLE, X_URL } from "@/lib/mochi";
 import { LOOK_KEY } from "@/lib/myMochi";
 import { GameBackdrop } from "./GameBackdrop";
+import { Countdown, useGameOpen } from "../Countdown";
 import { CarveMenu, Craft, Goals, PlotMenu, Pocket, Pockets, ProjectMenu, SellMenu, SoonMochi, Toast, VillagerTalk, mmss } from "./Panels";
 
 type Menu = WorldMenu | { type: "goals" } | { type: "pockets" } | null;
+
+const MENU_TITLES: Record<NonNullable<Menu>["type"], string> = {
+  craft: "🔨 Workbench",
+  pocket: "🏡 My Pocket",
+  villager: "💌 Villager",
+  plot: "🌱 Garden",
+  sell: "🪙 Shipping Bin",
+  project: "🔨 Build",
+  carve: "🗺️ The Frontier",
+  goals: "🌸 Goals",
+  pockets: "🏡 Visit Pockets",
+};
 
 // The look from the builder, with what they're wearing in the game
 function useLook(save: Save | null) {
@@ -44,7 +57,8 @@ function useLook(save: Save | null) {
 // Choosing sound here also unlocks audio, which browsers only allow after a tap.
 export function Play() {
   const [started, setStarted] = useState(false);
-  if (started && GAME_OPEN) return <Game />;
+  const open = useGameOpen();
+  if (started && open) return <Game />;
   const go = (sound: boolean) => {
     setMuted(!sound);
     if (sound) play("level");
@@ -58,7 +72,7 @@ export function Play() {
           <h1 className="font-display text-7xl text-white sm:text-8xl" style={{ textShadow: "5px 5px 0 #161616" }}>
             Mochi
           </h1>
-          {GAME_OPEN ? (
+          {open ? (
             <>
               <p className="mt-2 font-display text-xl" style={{ textShadow: "0 2px 0 #fffaf3" }}>
                 A cosy adventure. Best with sound on.
@@ -74,9 +88,7 @@ export function Play() {
             </>
           ) : (
             <>
-              <p className="mx-auto mt-3 inline-block rounded-full border-[3px] border-ink bg-[#fff1a8] px-4 py-1 font-display text-2xl shadow-[3px_3px_0_#161616]">
-                Coming soon
-              </p>
+              <Countdown className="mt-3" to={GAME_OPEN_AT} label="🎮 Opens in" done="Open now!" />
               <p className="mt-3 max-w-sm font-semibold">A cosy adventure: gather, farm, build your village, make friends and explore new worlds.</p>
               <a href={X_URL} target="_blank" rel="noreferrer" className="btn btn-pink mt-5 px-6! py-2! text-xl!">
                 Follow {X_HANDLE} for launch
@@ -116,7 +128,7 @@ function Game() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- the setting lives in the browser
     setMute(isMuted());
   }, []);
-  const canvas = useRef<HTMLCanvasElement>(null);
+  const stage = useRef<HTMLDivElement>(null);
   const engine = useRef<Engine | null>(null);
   // The latest picture of your Mochi, handed to whichever engine is running
   const playerImg = useRef<HTMLImageElement | null>(null);
@@ -165,7 +177,7 @@ function Game() {
   // Start the world once the save has loaded
   const ready = !!save;
   useEffect(() => {
-    if (!ready || !canvas.current) return;
+    if (!ready || !stage.current) return;
     const s = () => latest.current!;
     const host: Host = {
       energy: () => s()?.energy ?? 0,
@@ -215,13 +227,20 @@ function Game() {
         if (id !== "cave") setFloor(1);
       },
     };
-    const e = new Engine(canvas.current, host);
+    // The engine runs the world; Phaser draws it
+    const e = new Engine(document.createElement("canvas"), host, { external: true });
     engine.current = e;
-    e.start();
     if (playerImg.current) e.setPlayerImage(playerImg.current);
     if (process.env.NODE_ENV !== "production") (window as unknown as { __mochi: Engine }).__mochi = e;
+    let view: { destroy: () => void } | null = null;
+    let gone = false;
+    const el = stage.current;
+    import("@/game/phaser/view").then(({ mountView }) => {
+      if (!gone) view = mountView(el, e);
+    });
     return () => {
-      e.stop();
+      gone = true;
+      view?.destroy();
       engine.current = null;
     };
   }, [ready, act]);
@@ -333,57 +352,56 @@ function Game() {
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-[#7cc96a] select-none">
-      <canvas ref={canvas} className="absolute inset-0 h-full w-full touch-none" />
+      <div ref={stage} className="absolute inset-0 touch-none overflow-hidden" />
       <div className="hidden" aria-hidden>
         <MochiArt look={look} svgId="game-mochi" viewBox="160 280 680 760" />
       </div>
 
-      {/* Top bar: you, your energy and bag */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-2 sm:p-3">
-        <div className="chunk pointer-events-auto flex items-center gap-2.5 rounded-3xl! p-2 pr-3 sm:gap-3">
-          <Link href="/" aria-label="Back to the site" className="grid h-9 w-9 shrink-0 place-items-center rounded-full border-[3px] border-ink bg-white font-display">
-            ←
-          </Link>
-          <div className="h-11 w-11 shrink-0 overflow-hidden rounded-2xl border-[3px] border-ink bg-[#fff1a8] sm:h-12 sm:w-12">
-            <MochiArt look={look} className="h-full w-full" viewBox="160 280 680 720" title={name} />
-          </div>
-          <div className="w-28 sm:w-44">
-            <p className="truncate font-display text-base leading-tight sm:text-lg">
-              {name} <span className="text-ink/50">Lv {save.level}</span>
-            </p>
-            <div className="mt-0.5 h-2.5 overflow-hidden rounded-full border-2 border-ink bg-white">
-              <div className="meter-fill h-full transition-[width] duration-500" style={{ width: `${(save.xp / need) * 100}%` }} />
+      {/* ---------- Game HUD ---------- */}
+      {/* You: framed portrait, level badge, health-style bars */}
+      <div className="pointer-events-none absolute top-2 left-2 flex items-start gap-2 sm:top-3 sm:left-3">
+        <Link href="/" aria-label="Back to the site" className="hud-round pointer-events-auto">
+          ←
+        </Link>
+        <div className="hud-panel pointer-events-auto flex items-center gap-2.5 py-2 pr-3 pl-2">
+          <div className="relative">
+            <div className="hud-portrait">
+              <MochiArt look={look} className="h-full w-full" viewBox="160 280 680 720" title={name} />
             </div>
-            <p className="mt-0.5 text-[11px] font-extrabold sm:text-xs">
-              ⚡ {save.energy}/{ENERGY_MAX}
-              {nextIn > 0 && <span className="text-ink/50"> · +1 in {mmss(nextIn)}</span>}
-            </p>
-            <p className="text-[11px] font-extrabold sm:text-xs">
-              🪙 {save.coins} · {season.icon} {season.name} day {cal.day} · {sky === "rain" ? "🌧️" : sky === "snow" ? "🌨️" : "☀️"}
-            </p>
+            <span className="hud-level">{save.level}</span>
+          </div>
+          <div className="w-32 sm:w-48">
+            <p className="hud-name truncate">{name}</p>
+            <div className="hud-bar mt-1" title={`Energy ${save.energy}/${ENERGY_MAX}`}>
+              <div className="hud-bar-fill bg-gradient-to-r from-[#3ecf6e] to-[#b6f5c9]" style={{ width: `${(save.energy / ENERGY_MAX) * 100}%` }} />
+              <span className="hud-bar-label">
+                ⚡ {save.energy}/{ENERGY_MAX}
+                {nextIn > 0 && <span className="opacity-70"> · {mmss(nextIn)}</span>}
+              </span>
+            </div>
+            <div className="hud-bar hud-bar-thin mt-1" title={`XP ${save.xp}/${need}`}>
+              <div className="hud-bar-fill bg-gradient-to-r from-[#cf4f9c] to-[#ffb3d1]" style={{ width: `${(save.xp / need) * 100}%` }} />
+              <span className="hud-bar-label">XP {save.xp}/{need}</span>
+            </div>
           </div>
         </div>
+      </div>
+
+      {/* Coins and the day, top right; round menu buttons below */}
+      <div className="pointer-events-none absolute top-2 right-2 flex flex-col items-end gap-2 sm:top-3 sm:right-3">
+        <div className="hud-panel pointer-events-auto flex items-center gap-3 px-3 py-1.5">
+          <span className="hud-coins">🪙 {save.coins}</span>
+          <span className="hidden font-display text-sm sm:inline">
+            {season.icon} Day {cal.day}
+          </span>
+          <span className="font-display text-base">{sky === "rain" ? "🌧️" : sky === "snow" ? "🌨️" : "☀️"}</span>
+        </div>
         <div className="pointer-events-auto flex flex-col items-end gap-2">
-          <div className="chunk flex max-w-[150px] flex-wrap justify-end gap-1 rounded-3xl! p-1.5 sm:max-w-none sm:p-2">
-            {/* Only what you're carrying, so it stays small */}
-            {(Object.keys(MATS) as Mat[]).filter((m) => (save.mats[m] ?? 0) > 0).length === 0 ? (
-              <span className="px-1.5 font-display text-sm">🎒 empty</span>
-            ) : (
-              (Object.keys(MATS) as Mat[])
-                .filter((m) => (save.mats[m] ?? 0) > 0)
-                .map((m) => (
-                  <span key={m} title={MATS[m].name} className="rounded-full bg-white px-1.5 font-display text-sm tabular-nums sm:text-base">
-                    {MATS[m].icon}
-                    {save.mats[m]}
-                  </span>
-                ))
-            )}
-          </div>
-          <button onClick={() => setMenu({ type: "goals" })} className="btn px-3! py-1! text-base!">
-            🌸 Goals
+          <button onClick={() => setMenu({ type: "goals" })} className="hud-round hud-round-lg" aria-label="Goals" title="Goals">
+            🌸
           </button>
-          <button onClick={() => setMenu({ type: "pockets" })} className="btn px-3! py-1! text-base!">
-            🏡 Visit
+          <button onClick={() => setMenu({ type: "pockets" })} className="hud-round hud-round-lg" aria-label="Visit Pockets" title="Visit Pockets">
+            🏡
           </button>
           <button
             onClick={() => {
@@ -391,55 +409,72 @@ function Game() {
               setMute(!muted);
             }}
             aria-label={muted ? "Sound on" : "Sound off"}
-            className="grid h-8 w-8 place-items-center rounded-full border-[3px] border-ink bg-white"
+            className="hud-round"
           >
             {muted ? "🔇" : "🔊"}
           </button>
           {signedIn ? (
-            <p className="rounded-full border-[3px] border-ink bg-[#ccffb2] px-2 py-0.5 font-display text-xs">☁️ Saved online</p>
+            <span className="hud-chip bg-[#ccffb2]">☁️ Saved</span>
           ) : (
             // Full page trip to X; it brings you back to the game
-            <a href="/api/auth/x/start?to=/play" className="btn bg-ink! px-3! py-1! text-sm! whitespace-nowrap text-white!">
-              𝕏 <span className="sm:hidden">Save</span>
-              <span className="hidden sm:inline">Connect to save</span>
+            <a href="/api/auth/x/start?to=/play" className="hud-chip bg-ink text-white">
+              𝕏 Save
             </a>
           )}
-          {cal.festival && <p className="rounded-full border-[3px] border-ink bg-[#ffc6d6] px-2 py-0.5 font-display text-sm">🎉 {season.festival}! ×2</p>}
+          {cal.festival && <span className="hud-chip bg-[#ffc6d6]">🎉 {season.festival} ×2</span>}
           {region > 0 && (
-            <p className="rounded-full border-[3px] border-ink bg-[#e2d4ff] px-2 py-0.5 font-display text-sm">
+            <span className="hud-chip bg-[#e2d4ff]">
               🗺️ {frontierName(region)} {MATS[biomeFor(region).mat].icon}
-            </p>
+            </span>
           )}
-          {inZone === "cave" && <p className="rounded-full border-[3px] border-ink bg-[#e2d4ff] px-2 py-0.5 font-display text-sm">⛏️ Floor {floor}</p>}
+          {inZone === "cave" && <span className="hud-chip bg-[#e2d4ff]">⛏️ Floor {floor}</span>}
         </div>
       </div>
 
-      {/* The current starter quest */}
+      {/* Quest scroll */}
       {quest && (
-        <div className="pointer-events-none absolute top-[128px] left-2 max-w-[58vw] sm:top-[120px] sm:left-3 sm:max-w-xs">
-          <p className="rounded-2xl border-[3px] border-ink bg-[#fff1a8] px-3 py-1.5 text-xs font-extrabold shadow-[3px_3px_0_#161616] sm:text-sm">
-            📜 Quest {save.quest + 1}/{QUESTS.length}: {quest.text}
-            <span className="block text-ink/50">Reward 🪙{quest.coins}</span>
-          </p>
+        <div className="pointer-events-none absolute top-[92px] left-2 max-w-[62vw] sm:top-[104px] sm:left-3 sm:max-w-xs">
+          <div className="hud-scroll">
+            <p className="hud-scroll-title">📜 Quest {save.quest + 1}/{QUESTS.length}</p>
+            <p className="text-xs font-extrabold sm:text-sm">{quest.text}</p>
+            <p className="mt-0.5 text-[11px] font-bold text-ink/60">Reward 🪙{quest.coins}</p>
+          </div>
         </div>
       )}
       {sky === "rain" && region === 0 && save.plots.some((p) => p.crop) && (
-        <p className="pointer-events-none absolute bottom-14 left-1/2 -translate-x-1/2 rounded-full border-[3px] border-ink bg-[#bfe3ff] px-3 py-1 text-sm font-bold">🌧️ Rainy day: your crops are watered</p>
+        <p className="hud-chip pointer-events-none absolute top-[150px] left-1/2 -translate-x-1/2 bg-[#bfe3ff] sm:top-24">🌧️ Your crops are watered</p>
       )}
 
-      {/* Zone name as you walk in */}
+      {/* Area title card */}
       {showZone && zoneInfo && (
-        <div key={`zone-${zone.at}`} className="pointer-events-none absolute inset-x-0 top-24 flex justify-center sm:top-6">
-          <p className="pop-in rounded-full border-4 border-ink px-5 py-1 font-display text-2xl shadow-[4px_4px_0_#161616]" style={{ background: zoneInfo.color }}>
+        <div key={`zone-${zone.at}`} className="pointer-events-none absolute inset-x-0 top-[22%] flex justify-center">
+          <div className="hud-title" style={{ background: zoneInfo.color }}>
+            <span className="hud-title-kicker">Now entering</span>
             {zoneInfo.name}
-          </p>
+          </div>
         </div>
       )}
 
+      {/* Hotbar: what you're carrying */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center px-2 sm:bottom-3">
+        <div className={`hud-hotbar pointer-events-auto ${touch ? "mb-[132px]" : ""}`}>
+          {(Object.keys(MATS) as Mat[])
+            .filter((m) => (save.mats[m] ?? 0) > 0)
+            .slice(0, touch ? 6 : 10)
+            .map((m) => (
+              <div key={m} className="hud-slot" title={MATS[m].name}>
+                <span className="text-xl sm:text-2xl">{MATS[m].icon}</span>
+                <span className="hud-slot-count">{save.mats[m]}</span>
+              </div>
+            ))}
+          {(Object.keys(MATS) as Mat[]).every((m) => !(save.mats[m] ?? 0)) && <div className="px-3 py-2 font-display text-sm">🎒 Your bag is empty</div>}
+        </div>
+      </div>
+
       {/* How to play */}
       {!touch && (
-        <p className="pointer-events-none absolute bottom-3 left-3 rounded-full border-[3px] border-ink bg-white/90 px-3 py-1 text-sm font-bold">
-          WASD / arrows to move · <b>E</b> or Space to {prompt ? prompt.toLowerCase() : "interact"}
+        <p className="hud-chip pointer-events-none absolute bottom-20 left-3 bg-white/90">
+          WASD to move · <b>E</b> to {prompt ? prompt.toLowerCase() : "interact"}
         </p>
       )}
       {touch && <TouchControls engine={engine} prompt={prompt} />}
@@ -476,11 +511,14 @@ function Game() {
       {toast && <Toast key={`toast-${toast.key}`} gain={toast.gain} onDone={() => setToast(null)} />}
 
       {menu && (
-        <div className="absolute inset-0 z-50 grid place-items-center overflow-y-auto bg-ink/50 p-3 backdrop-blur-[2px]" onClick={() => setMenu(null)}>
-          <div role="dialog" aria-modal className="chunk pop-in relative my-auto max-h-[92svh] w-full max-w-4xl overflow-y-auto p-4 sm:p-6" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setMenu(null)} className="absolute top-3 right-3 z-10 grid h-9 w-9 place-items-center rounded-full border-[3px] border-ink bg-white font-display" aria-label="Close">
+        <div className="absolute inset-0 z-50 grid place-items-center overflow-y-auto bg-[#1d1430]/55 p-3 pt-10 backdrop-blur-[3px]" onClick={() => setMenu(null)}>
+          <div role="dialog" aria-modal className="hud-window pop-in relative my-auto w-full max-w-4xl" onClick={(e) => e.stopPropagation()}>
+            {/* Title ribbon */}
+            <div className="hud-ribbon">{MENU_TITLES[menu.type]}</div>
+            <button onClick={() => setMenu(null)} className="hud-close" aria-label="Close">
               ✕
             </button>
+            <div className="max-h-[80svh] overflow-y-auto p-4 pt-8 sm:p-6 sm:pt-9">
             {menu.type === "craft" && (
               <div className="pt-8 sm:pt-0">
                 <Craft save={save} now={now} act={act} />
@@ -488,7 +526,6 @@ function Game() {
             )}
             {menu.type === "pocket" && (
               <>
-                <p className="mb-3 font-display text-3xl">🏡 Your Pocket</p>
                 <Pocket save={save} look={look} act={act} />
               </>
             )}
@@ -499,13 +536,13 @@ function Game() {
             )}
             {menu.type === "goals" && (
               <>
-                <p className="mb-3 font-display text-3xl">🌸 Goals</p>
                 <Goals save={save} act={act} trialLeft={trialLeft} startTrial={startTrial} />
               </>
             )}
             {menu.type === "plot" && <PlotMenu save={save} i={menu.i} act={act} close={() => setMenu(null)} />}
             {menu.type === "sell" && <SellMenu save={save} act={act} />}
             {menu.type === "pockets" && <Pockets signedIn={signedIn} me={handle} />}
+            </div>
             {menu.type === "carve" && (
               <div className="mx-auto max-w-md">
                 <CarveMenu save={save} to={menu.to} act={act} />

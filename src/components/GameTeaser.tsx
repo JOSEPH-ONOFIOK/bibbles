@@ -1,10 +1,14 @@
+"use client";
+
 import Link from "next/link";
-import { GAME_OPEN } from "@/game/data";
+import { GAME_OPEN_AT } from "@/game/data";
+import { Countdown, useGameOpen } from "./Countdown";
 import { X_HANDLE, X_URL } from "@/lib/mochi";
 import { GameBackdrop } from "./game/GameBackdrop";
 
 // The game playing itself behind a short pitch, on the home page
 export function GameTeaser() {
+  const open = useGameOpen();
   return (
     <section id="game" data-bg="#ccffb2" className="relative isolate h-[78svh] min-h-[520px] scroll-mt-20 overflow-hidden border-t-4 border-ink">
       {/* Keep the Mochi in the open: right of the card on wide screens, above it on phones */}
@@ -18,7 +22,7 @@ export function GameTeaser() {
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#1f9d55] opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-[#1f9d55]" />
             </span>
-            {GAME_OPEN ? "Live from the game" : "A sneak peek"}
+            {open ? "Live from the game" : "Opens today"}
           </p>
           <h2 className="mt-3 font-display text-4xl leading-none sm:text-6xl">Play as your Mochi</h2>
           <p className="mt-2 font-semibold text-ink/75 sm:hidden">Gather, farm, build and explore. A cosy little adventure.</p>
@@ -32,7 +36,7 @@ export function GameTeaser() {
               </span>
             ))}
           </div>
-          {GAME_OPEN ? (
+          {open ? (
             <>
               <Link href="/play" className="btn btn-pink mt-5 w-full py-3! text-2xl!">
                 Play now
@@ -41,7 +45,7 @@ export function GameTeaser() {
             </>
           ) : (
             <>
-              <p className="mt-5 w-full rounded-full border-4 border-ink bg-[#fff1a8] py-2.5 text-center font-display text-2xl shadow-[4px_4px_0_#161616]">Coming soon</p>
+              <Countdown className="mt-5 w-full" to={GAME_OPEN_AT} label="🎮 Opens in" done="Open now!" />
               <a href={X_URL} target="_blank" rel="noreferrer" className="mt-3 block text-center text-sm font-bold underline">
                 Follow {X_HANDLE} to hear when it opens
               </a>

@@ -276,5 +276,8 @@ export const QUESTS: Quest[] = [
   { id: "bakery", text: "Build the Bakery so Pip can move in 🥐", coins: 50, xp: 25 },
 ];
 
-// The game is shown but closed until launch. Set NEXT_PUBLIC_GAME_OPEN=1 and redeploy to open it.
-export const GAME_OPEN = process.env.NEXT_PUBLIC_GAME_OPEN === "1";
+// The game opens by itself at GAME_OPEN_AT (4pm WAT, 10 Nov). NEXT_PUBLIC_GAME_OPEN=1 opens it early;
+// NEXT_PUBLIC_GAME_OPEN_AT (an ISO time) moves the launch.
+const openAt = Date.parse(process.env.NEXT_PUBLIC_GAME_OPEN_AT ?? "");
+export const GAME_OPEN_AT = Number.isFinite(openAt) ? openAt : Date.parse("2026-11-10T15:00:00Z");
+export const gameOpen = (now = Date.now()) => process.env.NEXT_PUBLIC_GAME_OPEN === "1" || now >= GAME_OPEN_AT;

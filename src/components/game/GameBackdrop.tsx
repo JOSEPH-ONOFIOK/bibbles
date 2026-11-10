@@ -44,17 +44,17 @@ export function GameBackdrop({
 }) {
   const svgId = `demo-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const where = useRef({ at, region });
-  const canvas = useRef<HTMLCanvasElement>(null);
+  const stage = useRef<HTMLDivElement>(null);
   // Read once, when the engine starts
   const focusAt = useRef(focus);
   const box = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!canvas.current || !box.current) return;
+    if (!stage.current || !box.current) return;
     const wide = matchMedia("(min-width: 640px)").matches;
     const fo = focusAt.current;
     const f = fo ? (wide ? fo.wide : fo.narrow) : [0.5, 0.5];
-    const e = new Engine(canvas.current, demoHost(), { demo: true, focus: { x: f[0], y: f[1] }, ...where.current });
+    const e = new Engine(document.createElement("canvas"), demoHost(), { demo: true, external: true, focus: { x: f[0], y: f[1] }, ...where.current });
     const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
     // The demo Mochi, drawn from the same art as everywhere else
     const svg = box.current.querySelector("svg");
@@ -68,39 +68,39 @@ export function GameBackdrop({
       img.onload = () => e.setPlayerImage(img);
       img.src = url;
     }
-    let running = false;
-    const start = () => {
-      if (running) return;
-      running = true;
-      e.start();
-    };
-    const stop = () => {
-      if (!running) return;
-      running = false;
-      e.stop();
-    };
-    if (still) {
-      // One frame, no motion
-      start();
-      const t = setTimeout(stop, 400);
-      return () => {
-        clearTimeout(t);
-        stop();
-        if (url) URL.revokeObjectURL(url);
-      };
-    }
-    const io = new IntersectionObserver(([en]) => (en.isIntersecting ? start() : stop()), { rootMargin: "100px" });
+    let view: { pause: () => void; resume: () => void; destroy: () => void } | null = null;
+    let gone = false;
+    let visible = true;
+    const el = stage.current;
+    import("@/game/phaser/view").then(({ mountView }) => {
+      if (gone) return;
+      view = mountView(el, e);
+      // Still for people who prefer less motion: a moment to draw, then hold
+      if (still) setTimeout(() => view?.pause(), 600);
+      else if (!visible) view.pause();
+    });
+    // Only run while on screen
+    const io = new IntersectionObserver(
+      ([en]) => {
+        visible = en.isIntersecting;
+        if (!view || still) return;
+        if (visible) view.resume();
+        else view.pause();
+      },
+      { rootMargin: "100px" },
+    );
     io.observe(box.current);
     return () => {
+      gone = true;
       io.disconnect();
-      stop();
+      view?.destroy();
       if (url) URL.revokeObjectURL(url);
     };
   }, []);
 
   return (
     <div ref={box} className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`} aria-hidden>
-      <canvas ref={canvas} className="h-full w-full" />
+      <div ref={stage} className="h-full w-full" />
       <div className="hidden">
         <MochiArt look={DEMO_LOOK} svgId={svgId} viewBox="160 280 680 760" />
       </div>

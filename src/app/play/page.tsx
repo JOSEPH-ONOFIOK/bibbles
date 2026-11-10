@@ -1,31 +1,17 @@
-import type { Metadata, Viewport } from "next";
-import { Play } from "@/components/game/Play";
-import { GamePreview } from "@/components/game/GamePreview";
-import { Shell } from "@/components/Shell";
-import { GAME_OPEN } from "@/game/data";
+import type { Metadata } from "next";
+import { PlayGate } from "@/components/game/PlayGate";
 
-const description = "Mochi Game V1, coming soon. Play as your Mochi: explore, gather, farm, build the village, make friends and earn $MOCHI in weekly Trials.";
+const description = "Mochi Game V1 opens today at 4pm WAT. Play as your Mochi: explore, gather, farm, build the village, make friends and earn $MOCHI in weekly Trials.";
 
 export const metadata: Metadata = {
   title: "Mochi Game",
   description,
   alternates: { canonical: "/play" },
-  openGraph: { url: "/play", title: "Mochi Game V1 · Coming soon", description },
-  twitter: { title: "Mochi Game V1 · Coming soon", description },
+  openGraph: { url: "/play", title: "Mochi Game V1", description },
+  twitter: { title: "Mochi Game V1", description },
 };
 
-// The open game is a full-screen game: no pinch zoom. The preview is a normal page.
-export const viewport: Viewport = GAME_OPEN
-  ? { width: "device-width", initialScale: 1, maximumScale: 1, userScalable: false }
-  : { width: "device-width", initialScale: 1 };
-
+// Shows the preview until launch, then the game, switching by itself when the countdown ends
 export default function PlayPage() {
-  // Until launch: the game plays itself above the docs
-  if (!GAME_OPEN)
-    return (
-      <Shell>
-        <GamePreview />
-      </Shell>
-    );
-  return <Play />;
+  return <PlayGate />;
 }

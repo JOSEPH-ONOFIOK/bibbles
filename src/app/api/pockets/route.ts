@@ -2,7 +2,7 @@ import { connection } from "next/server";
 import { bad } from "@/lib/api";
 import { getSession } from "@/lib/auth";
 import { cached } from "@/lib/cache";
-import { GAME_OPEN, calendar } from "@/game/data";
+import { calendar, gameOpen } from "@/game/data";
 import { hasDatabase, redis } from "@/lib/store";
 
 // Pocket visits and Pocket of the week.
@@ -19,7 +19,7 @@ const pairs = (flat: string[]) => {
 
 export async function GET(req: Request) {
   await connection();
-  if (!GAME_OPEN) return bad("The game isn't open yet.", 404);
+  if (!gameOpen()) return bad("The game isn't open yet.", 404);
   if (!hasDatabase) return Response.json({ week: calendar().week, top: [], recent: [], voted: null });
   const h = new URL(req.url).searchParams.get("h")?.toLowerCase();
   if (h) {

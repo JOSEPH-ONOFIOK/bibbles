@@ -58,11 +58,11 @@ export const RULES = [
   "You both play the same 90-second map: the same items and the same obstacles at the same times.",
   "+10 for each item, +25 for each rare ✨ item, −15 and a 1-second stun for each obstacle hit.",
   "The server replays your moves and works out the score. The higher score wins.",
-  "Equal scores: fewer hits wins. Still equal: a tie, and both players get their full stake back with no fee.",
+  "Equal scores: fewer hits wins. Still equal: a tie, and both players get their full stake back.",
   "Nobody joins: cancel any time and get your stake back. Anyone can cancel it once the join window ends.",
   "If your opponent doesn't start within 60 seconds of you, you win.",
   "Disconnect mid-run: your score counts as it stood when you dropped. If both players drop, it's a full refund.",
   "A run that fails the server check loses. If both fail, or the only player who started fails, it's a full refund.",
   "If no result is posted in time, either player can take a full refund from the contract.",
-  "The winner gets the pot minus the project fee. The fee is only taken when someone wins.",
+  "The winner receives 75% of both stakes, the amount shown before you confirm. Ties and refunds return every stake in full.",
 ];

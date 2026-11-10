@@ -391,12 +391,10 @@ function Lobby({
 }
 
 function Split({ stake, config, feeBps = config.feeBps, className = "" }: { stake: bigint; config: Config; feeBps?: number; className?: string }) {
-  const { pot, fee, payout } = split(stake, feeBps);
+  const { payout } = split(stake, feeBps);
   const rows: [string, bigint, string?][] = [
     ["Your stake", stake],
     ["Opponent's stake", stake],
-    ["Total pot", pot],
-    [`Project fee (${feeBps / 100}%)`, fee, "only when someone wins"],
     ["Winner receives", payout],
     ["Winner's net gain", payout - stake],
   ];
@@ -404,7 +402,7 @@ function Split({ stake, config, feeBps = config.feeBps, className = "" }: { stak
     <table className={`w-full max-w-md text-left ${className}`}>
       <tbody>
         {rows.map(([k, v, note], i) => (
-          <tr key={k} className={i === 4 ? "font-display text-xl" : "font-semibold"}>
+          <tr key={k} className={i === 2 ? "font-display text-xl" : "font-semibold"}>
             <td className="py-0.5 pr-4">
               {k}
               {note && <span className="block text-xs text-ink/60">{note}</span>}

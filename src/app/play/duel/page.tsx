@@ -3,7 +3,7 @@ import Link from "next/link";
 import { DuelApp } from "@/components/duel/DuelApp";
 import { GameBackdrop } from "@/components/game/GameBackdrop";
 
-const description = "Mochi Duel: stake $MOCHI against another player, play the same 90-second map, and the higher verified score wins the pot.";
+const description = "Mochi Duel: stake $MOCHI against another player, play the same 90-second map, and the higher verified score wins.";
 
 export const metadata: Metadata = {
   title: "Mochi Duel",

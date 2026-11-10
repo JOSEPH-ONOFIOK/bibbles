@@ -65,7 +65,7 @@ export const RULES = [
   "A run that fails the server check loses. If both fail, or the only player who started fails, it's a full refund.",
   "If no result is posted in time, either player can take a full refund from the contract.",
   "The winner receives 75% of both stakes, the amount shown before you confirm. Ties and refunds return every stake in full.",
-  "Play the AI: the Mochi team's wallet joins with the same stake and the AI plays the same map. It plays at one fixed level for everyone, worked out from the map itself, and usually scores 550–790. Duels against the AI don't count toward the weekly leaderboard.",
+  "Play the AI: the Mochi team's wallet joins with the same stake and the AI plays the same map. It plays at one fixed level for everyone, worked out from the map itself, and usually scores 455–695. Duels against the AI don't count toward the weekly leaderboard.",
 ];
 
 // ---------- weekly leaderboard ----------

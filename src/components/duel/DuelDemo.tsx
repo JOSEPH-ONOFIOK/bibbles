@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { DIRS, H, PLAYER_R, SECONDS, TICKS, TPS, W, createSim, step, type Sim } from "@/duel/sim";
+import { aiMoves } from "@/duel/ai";
 import { KEYS, draw, toCode } from "./DuelGame";
 
 // A duel playing itself, so people can see what they're entering before they stake anything.
@@ -50,8 +51,10 @@ export function DuelDemo({ start = "watch" }: { start?: "watch" | "practice" }) 
   useEffect(() => {
     const seed = Math.floor(Math.random() * 2 ** 32) >>> 0;
     const a = createSim(seed); // the one on screen
-    const b = createSim(seed); // the opponent: same map, played by a bot
+    const b = createSim(seed); // the opponent: same map
     const practice = mode === "practice";
+    // In practice you face the real Mochi AI, exactly as it plays in staked duels
+    const ai = practice ? aiMoves(seed) : "";
     const held = keys.current;
 
     let onScreen = true;
@@ -89,7 +92,7 @@ export function DuelDemo({ start = "watch" }: { start?: "watch" | "practice" }) 
       const target = Math.min(TICKS, Math.floor((played / 1000) * TPS));
       while (a.tick < target) {
         step(a, practice ? dir() : bot(a, true));
-        step(b, bot(b, !practice)); // a little easier to beat in practice
+        step(b, practice ? ai.charCodeAt(b.tick) - 48 : bot(b, true));
       }
       draw(canvas.current, a);
       const over = a.tick >= TICKS;

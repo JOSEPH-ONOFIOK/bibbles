@@ -7,8 +7,9 @@
 import { DIRS, TICKS, createSim, step, type Sim } from "./sim";
 
 export const AI_LEVEL = "Normal";
-// Measured over 300 seeds: average 676, usually 555–790 (10th–90th percentile)
-export const AI_TYPICAL = { avg: 680, low: 550, high: 790 };
+// Measured over 300 seeds: average 575, usually 455–695 (10th–90th percentile).
+// Against simulated players: beats an average player about 48% of the time, a good one about 5%.
+export const AI_TYPICAL = { avg: 575, low: 455, high: 695 };
 
 function rng(seed: number) {
   let a = seed >>> 0;
@@ -21,9 +22,9 @@ function rng(seed: number) {
   };
 }
 
-const REACT_EVERY = 10; // decides every 10 ticks (a third of a second)
-const WANDER = 0.25; // chance of a wasted move for one decision
-const DODGE_MARGIN = 26; // px of space it tries to leave around rocks
+const REACT_EVERY = 12; // decides every 12 ticks (0.4 seconds)
+const WANDER = 0.3; // chance of a wasted move for one decision
+const DODGE_MARGIN = 22; // px of space it tries to leave around rocks
 
 function decide(s: Sim, r: () => number) {
   if (r() < WANDER) return 1 + Math.floor(r() * 8);

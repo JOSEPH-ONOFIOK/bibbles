@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { decodeEventLog, formatUnits, parseUnits, type Address, type Hex } from "viem";
 import { DUEL_CONTRACT, MOCHI_TOKEN, Outcome, PONS_URL, RULES, START_WINDOW_S, Status, duelConfigured, erc20Abi, escrowAbi, robinhood, startMessage } from "@/duel/config";
+import { DuelDemo } from "./DuelDemo";
 import { DuelGame } from "./DuelGame";
 import { useWallet, type Wallet } from "./wallet";
 
@@ -115,10 +116,13 @@ export function DuelApp() {
 
   if (!duelConfigured) {
     return (
-      <Card>
-        <h2 className="font-display text-3xl">Coming soon</h2>
-        <p className="mt-2 font-semibold">Mochi Duel opens once the escrow contract is live on Robinhood Chain.</p>
-      </Card>
+      <div className="mx-auto grid max-w-4xl gap-6 px-4">
+        <Card>
+          <h2 className="font-display text-3xl">Coming soon</h2>
+          <p className="mt-2 font-semibold">Mochi Duel opens once the escrow contract is live on Robinhood Chain.</p>
+        </Card>
+        <DuelDemo />
+      </div>
     );
   }
 
@@ -126,6 +130,7 @@ export function DuelApp() {
     <div className="mx-auto grid max-w-4xl gap-6 px-4">
       <WalletBar w={w} config={config} balance={balance} onRefresh={loadBalance} />
       {loadErr && <p className="chunk bg-[#ffe0e0] p-4 font-bold">{loadErr}</p>}
+      {!matchId && <DuelDemo />}
       {w.address && w.onRightChain && config && w.clients ? (
         matchId ? (
           <MatchRoom key={matchId} id={matchId} w={w} config={config} onBack={() => goMatch(null)} onChange={refreshAll} />

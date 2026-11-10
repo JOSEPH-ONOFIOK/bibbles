@@ -15,7 +15,7 @@ type Props = {
   onFinished: () => void;
 };
 
-const KEYS: Record<string, [number, number]> = {
+export const KEYS: Record<string, [number, number]> = {
   ArrowUp: [0, -1], w: [0, -1], W: [0, -1],
   ArrowDown: [0, 1], s: [0, 1], S: [0, 1],
   ArrowLeft: [-1, 0], a: [-1, 0], A: [-1, 0],
@@ -23,7 +23,7 @@ const KEYS: Record<string, [number, number]> = {
 };
 
 // A direction vector → input code 0–8 (0 none, 1 up, clockwise)
-function toCode(x: number, y: number) {
+export function toCode(x: number, y: number) {
   if (Math.abs(x) < 0.2 && Math.abs(y) < 0.2) return 0;
   const a = Math.atan2(x, -y); // 0 = up, clockwise
   return (((Math.round(a / (Math.PI / 4)) % 8) + 8) % 8) + 1;
@@ -201,7 +201,7 @@ export function DuelGame({ seed, startAt, offset, resume, upload, opponent, onFi
   );
 }
 
-function draw(c: HTMLCanvasElement | null, s: Sim) {
+export function draw(c: HTMLCanvasElement | null, s: Sim) {
   const g = c?.getContext("2d");
   if (!g) return;
   g.clearRect(0, 0, W, H);

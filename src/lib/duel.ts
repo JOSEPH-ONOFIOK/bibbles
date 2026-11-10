@@ -39,7 +39,7 @@ export const house: Address | null = HOUSE_KEY ? privateKeyToAccount(HOUSE_KEY).
 export const isHouse = (a: string) => Boolean(house && a.toLowerCase() === house.toLowerCase());
 const houseIn = (m: OnchainMatch) => isHouse(m.playerA) || isHouse(m.playerB);
 // Largest stake the AI will accept, in whole MOCHI
-export const AI_MAX_STAKE = Number(process.env.DUEL_AI_MAX_STAKE || 5000);
+export const AI_MAX_STAKE = Number(process.env.DUEL_AI_MAX_STAKE || 50000);
 
 export const duelReady = () => Boolean(DUEL_CONTRACT && MOCHI_TOKEN && SIGNER_KEY && SECRET.length >= 32 && hasDatabase);
 

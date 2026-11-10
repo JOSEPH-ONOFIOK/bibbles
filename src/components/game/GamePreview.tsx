@@ -109,7 +109,7 @@ export function GamePreview() {
             </h1>
             <div className="mt-3 flex items-center justify-center gap-2">
               <span className="rounded-full border-[3px] border-ink bg-white px-3 py-0.5 font-display">V1</span>
-              <span className="rounded-full border-[3px] border-ink bg-[#fff1a8] px-3 py-0.5 font-display shadow-[3px_3px_0_#161616]">Opens today 4pm WAT</span>
+              <span className="rounded-full border-[3px] border-ink bg-[#fff1a8] px-3 py-0.5 font-display shadow-[3px_3px_0_#161616]">Opens today 4:30pm WAT</span>
             </div>
             <Countdown className="mt-4" to={GAME_OPEN_AT} label="🎮 Opens in" done="Open now!" />
             <p className="mt-4 font-display text-2xl">Play to earn? Yes.</p>

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PlayGate } from "@/components/game/PlayGate";
 
-const description = "Mochi Game V1 opens today at 4pm WAT. Play as your Mochi: explore, gather, farm, build the village, make friends and earn $MOCHI in weekly Trials.";
+const description = "Mochi Game V1 opens today at 4:30pm WAT. Play as your Mochi: explore, gather, farm, build the village, make friends and earn $MOCHI in weekly Trials.";
 
 export const metadata: Metadata = {
   title: "Mochi Game",

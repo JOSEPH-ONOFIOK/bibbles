@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { GAME_OPEN_AT } from "@/game/data";
-import { APPLY_END } from "@/lib/deadline";
+import { AIRDROP_END, APPLY_END } from "@/lib/deadline";
 
 // False until the moment `at` arrives, then flips to true on its own
 export function useReached(at: number) {
@@ -24,6 +24,11 @@ export function useReached(at: number) {
 // True until the application deadline
 export function useApplyOpen() {
   return !useReached(APPLY_END);
+}
+
+// True until the $MOCHI airdrop deadline
+export function useAirdropOpen() {
+  return !useReached(AIRDROP_END);
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");

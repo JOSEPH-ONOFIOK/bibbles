@@ -1,6 +1,6 @@
 import { connection } from "next/server";
 import { authed, bad } from "@/lib/api";
-import { CLOSED_MSG, applyOpen } from "@/lib/deadline";
+import { CLOSED_MSG, airdropOpen } from "@/lib/deadline";
 import { AIRDROP_POST_ID } from "@/lib/airdrop";
 import { getSession } from "@/lib/auth";
 import { HANDLE, WALLET, toPublic } from "@/lib/entry";
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
 
 async function run(req: Request) {
   // Nothing new after the deadline
-  if (!applyOpen()) return bad(CLOSED_MSG, 403);
+  if (!airdropOpen()) return bad(CLOSED_MSG, 403);
   const a = await authed(req);
   if ("error" in a) return a.error;
   const { entry, body } = a;

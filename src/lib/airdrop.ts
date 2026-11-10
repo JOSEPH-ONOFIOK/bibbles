@@ -1,6 +1,6 @@
 // $MOCHI airdrop application (/mochiclaim). Shared by the API and the UI.
 
-import { TOKEN, X_HANDLE } from "./mochi";
+import { X_HANDLE } from "./mochi";
 import { SITE_URL } from "./site";
 
 // The airdrop announcement people like, repost and quote. Hardcoded to the profile until
@@ -13,9 +13,13 @@ export const AIRDROP_SHARE = "1%";
 const host = SITE_URL.replace(/^https?:\/\//, "").replace(/^www\./, "");
 export const refLink = (handle: string) => `${host}/mochiclaim?ref=${handle}`;
 
+// The ticker as written in the quote post. X turns "$MOCHI" into a price tag for a different token,
+// so the post says $MOCHII; the rest of the site keeps $MOCHI.
+const QUOTE_TOKEN = "$MOCHII";
+
 // Filled in for their quote post
 export const qrtText = (handle: string) =>
-  `${TOKEN} Airdrop Application is Live.\n\n${AIRDROP_SHARE} of ${TOKEN} will be bought & airdropped back to the community\n\nRegister → ${refLink(handle)}\n\nDrop your wallets = ${TOKEN}.${AIRDROP_POST_ID ? "" : `\n\n${X_HANDLE}`}`;
+  `${QUOTE_TOKEN} Airdrop Application is Live.\n\n${AIRDROP_SHARE} of ${QUOTE_TOKEN} will be bought & airdropped back to the community\n\nRegister → ${refLink(handle)}\n\nDrop your wallets = ${QUOTE_TOKEN}.${AIRDROP_POST_ID ? "" : `\n\n${X_HANDLE}`}`;
 
 export type Airdrop = {
   followed?: boolean;
